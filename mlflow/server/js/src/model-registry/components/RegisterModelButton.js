@@ -22,7 +22,7 @@ import Utils from '../../common/utils/Utils';
 import { getUUID } from '../../common/utils/ActionUtils';
 import { getModelNameFilter } from '../../model-registry/utils/SearchUtils';
 
-const MAX_SEARCH_REGISTERED_MODELS = 5; // used in drop-down list so not many are visible at once
+const MAX_SEARCH_registeredModel = 5; // used in drop-down list so not many are visible at once
 
 export class RegisterModelButtonImpl extends React.Component {
   static propTypes = {
@@ -72,12 +72,12 @@ export class RegisterModelButtonImpl extends React.Component {
   };
 
   handleSearchRegisteredModels = (input) => {
-    this.props.searchRegisteredModelsApi(getModelNameFilter(input), MAX_SEARCH_REGISTERED_MODELS);
+    this.props.searchRegisteredModelsApi(getModelNameFilter(input), MAX_SEARCH_registeredModel);
   };
 
   reloadModelVersionsForCurrentRun = () => {
     const { runUuid } = this.props;
-    return this.props.searchModelVersionsApi({ run_id: runUuid }, this.searchModelVersionRequestId);
+    return this.props.searchModelVersionsApi({ runId: runUuid }, this.searchModelVersionRequestId);
   };
 
   handleRegisterModel = () => {

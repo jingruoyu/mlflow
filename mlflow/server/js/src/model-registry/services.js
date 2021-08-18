@@ -6,7 +6,7 @@ const StrictJsonBigInt = JsonBigInt({ strict: true, storeAsString: true });
 
 export class Services {
   static createRegisteredModel({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/registered-models/create'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/registered-models/create'), {
       type: 'POST',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -28,7 +28,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static listRegisteredModels({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/registered-models/list'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/registered-models/list'), {
       type: 'GET',
       dataType: 'json',
       converters: {
@@ -49,7 +49,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static searchRegisteredModels({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/registered-models/search'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/registered-models/search'), {
       type: 'GET',
       dataType: 'json',
       converters: {
@@ -70,7 +70,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static updateRegisteredModel({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/registered-models/update'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/registered-models/update'), {
       type: 'PATCH',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -92,7 +92,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static deleteRegisteredModel({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/registered-models/delete'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/registered-models/delete'), {
       type: 'DELETE',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -111,7 +111,7 @@ export class Services {
    * @returns {*|jQuery|*|*}
    */
   static setRegisteredModelTag({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/registered-models/set-tag'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/registered-models/set-tag'), {
       type: 'POST',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -130,7 +130,7 @@ export class Services {
    * @returns {*|jQuery|*|*}
    */
   static deleteRegisteredModelTag({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/registered-models/delete-tag'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/registered-models/delete-tag'), {
       type: 'DELETE',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -149,7 +149,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static createModelVersion({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/model-versions/create'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/model-versions/create'), {
       type: 'POST',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -171,7 +171,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static searchModelVersions({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/model-versions/search'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/model-versions/search'), {
       type: 'GET',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -190,7 +190,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static updateModelVersion({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/model-versions/update'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/model-versions/update'), {
       type: 'PATCH',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -209,7 +209,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static transitionModelVersionStage({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/model-versions/transition-stage'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/model-versions/transition-stage'), {
       type: 'POST',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -228,7 +228,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static deleteModelVersion({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/model-versions/delete'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/model-versions/delete'), {
       type: 'DELETE',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -247,7 +247,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static getRegisteredModel({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/registered-models/get'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/registered-models/get'), {
       type: 'GET',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -266,7 +266,7 @@ export class Services {
    * @returns {*|jQuery|*|*|*|*}
    */
   static getModelVersion({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/model-versions/get'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/model-versions/get'), {
       type: 'GET',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -285,7 +285,7 @@ export class Services {
    * @returns {*|jQuery|*|*}
    */
   static setModelVersionTag({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/model-versions/set-tag'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/model-versions/set-tag'), {
       type: 'POST',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -304,7 +304,7 @@ export class Services {
    * @returns {*|jQuery|*|*}
    */
   static deleteModelVersionTag({ data, success, error }) {
-    return $.ajax(Utils.getAjaxUrl('ajax-api/2.0/preview/mlflow/model-versions/delete-tag'), {
+    return $.ajax(Utils.getAjaxUrl('api/2.0/preview/mlflow/model-versions/delete-tag'), {
       type: 'DELETE',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',

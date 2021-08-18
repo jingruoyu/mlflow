@@ -87,7 +87,6 @@
     "extract-i18n:base": "node scripts/extract-i18n.js",
     "extract-i18n": "npm run check && npm run extract-i18n:base"
   },
-  "homepage": "static-files",
   "jest": {
     "collectCoverageFrom": [
       "src/**/*.{js,jsx}",

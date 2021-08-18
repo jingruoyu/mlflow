@@ -736,7 +736,7 @@ class Utils {
         registeredModelName: model.name,
         artifactPath: this.normalize(model.source).split('/artifacts/')[1],
         registeredModelVersion: model.version,
-        registeredModelCreationTimestamp: model.creation_timestamp,
+        registeredModelCreationTimestamp: model.creationTimestamp,
       };
     });
     const loggedModelsWithNormalizedPath = loggedModels.map((model) => {
@@ -769,8 +769,9 @@ class Utils {
   }
 
   static getAjaxUrl(relativeUrl) {
-    if (process.env.USE_ABSOLUTE_AJAX_URLS === 'true') {
-      return '/' + relativeUrl;
+    console.log('process.env', process.env)
+    if (process.env.NODE_ENV === 'production') {
+      return 'http://synapsemlserv.eastus.cloudapp.azure.com:8080/proxy/' + relativeUrl;
     }
     return relativeUrl;
   }

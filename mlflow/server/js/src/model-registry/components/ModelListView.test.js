@@ -229,7 +229,7 @@ describe('ModelListView', () => {
     let table = wrapper.find(Table);
     // prop values look legit
     expect(findColumn(table, 'name').sortOrder).toBe('ascend');
-    expect(findColumn(table, 'last_updated_timestamp').sortOrder).toBe(undefined);
+    expect(findColumn(table, 'lastUpdatedTimestamp').sortOrder).toBe(undefined);
     // the table doesn't actually sort, though, and displays exactly what's given.
     expect(wrapper.find('td.model-name').length).toBe(3);
     expect(
@@ -261,7 +261,7 @@ describe('ModelListView', () => {
     table = wrapper.find(Table);
     // prop values look legit
     expect(findColumn(table, 'name').sortOrder).toBe(undefined);
-    expect(findColumn(table, 'last_updated_timestamp').sortOrder).toBe('descend');
+    expect(findColumn(table, 'lastUpdatedTimestamp').sortOrder).toBe('descend');
     // the table doesn't actually sort, though, and displays exactly what's given.
     expect(wrapper.find('td.model-name').length).toBe(3);
     expect(

@@ -40,7 +40,7 @@ describe('RegisterModelButton', () => {
 
   test('handleSearchRegisteredModel should invoke api', () => {
     const response = { value: {} };
-    response.value[getProtoField('registered_models')] = [
+    response.value[getProtoField('registeredModel')] = [
       {
         name: 'Model A',
       },

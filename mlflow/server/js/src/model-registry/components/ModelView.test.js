@@ -218,7 +218,7 @@ describe('ModelView', () => {
       .find(ModelViewImpl)
       .instance()
       .setState({
-        runsSelected: { run_id_1: 'version_1' },
+        runsSelected: { runId_1: 'version_1' },
       });
     wrapper.update();
     expect(
@@ -228,7 +228,7 @@ describe('ModelView', () => {
         .props().disabled,
     ).toEqual(true);
 
-    const twoRunsSelected = { run_id_1: 'version_1', run_id_2: 'version_2' };
+    const twoRunsSelected = { runId_1: 'version_1', runId_2: 'version_2' };
     wrapper
       .find(ModelViewImpl)
       .instance()

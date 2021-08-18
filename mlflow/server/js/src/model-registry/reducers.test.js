@@ -8,16 +8,16 @@ import ModelRegistryReducers, {
 } from './reducers';
 import { mockModelVersionDetailed, mockRegisteredModelDetailed } from './test-utils';
 import {
-  DELETE_MODEL_VERSION,
+  DELETE_modelVersion,
   DELETE_REGISTERED_MODEL,
-  GET_MODEL_VERSION,
+  GET_modelVersion,
   GET_REGISTERED_MODEL,
-  LIST_REGISTERED_MODELS,
-  SEARCH_MODEL_VERSIONS,
+  LIST_registeredModel,
+  SEARCH_modelVersionS,
   SET_REGISTERED_MODEL_TAG,
   DELETE_REGISTERED_MODEL_TAG,
-  SET_MODEL_VERSION_TAG,
-  DELETE_MODEL_VERSION_TAG,
+  SET_modelVersion_TAG,
+  DELETE_modelVersion_TAG,
   PARSE_MLMODEL_FILE,
 } from './actions';
 import { fulfilled } from '../common/utils/ActionUtils';
@@ -36,68 +36,68 @@ describe('test modelByName', () => {
     expect(modelByName(undefined, {})).toEqual({});
   });
 
-  test('LIST_REGISTERED_MODELS handles empty state correctly', () => {
+  test('LIST_registeredModel handles empty state correctly', () => {
     const modelA = mockRegisteredModelDetailed('modelA');
     const modelB = mockRegisteredModelDetailed('modelB');
     const state = {};
     const action = {
-      type: fulfilled(LIST_REGISTERED_MODELS),
+      type: fulfilled(LIST_registeredModel),
       payload: {
-        registered_models: [modelA, modelB],
+        registeredModel: [modelA, modelB],
       },
     };
     expect(modelByName(state, action)).toEqual({ modelA, modelB });
   });
 
-  test('LIST_REGISTERED_MODELS flushes previous loaded models in state (1)', () => {
+  test('LIST_registeredModel flushes previous loaded models in state (1)', () => {
     const modelA = mockRegisteredModelDetailed('modelA');
     const modelB = mockRegisteredModelDetailed('modelB');
     const modelC = mockRegisteredModelDetailed('modelC');
     const state = { modelA };
     const action = {
-      type: fulfilled(LIST_REGISTERED_MODELS),
+      type: fulfilled(LIST_registeredModel),
       payload: {
-        registered_models: [modelB, modelC],
+        registeredModel: [modelB, modelC],
       },
     };
     expect(modelByName(state, action)).toEqual({ modelB, modelC });
   });
 
-  test('LIST_REGISTERED_MODELS flushes previous loaded models in state (2)', () => {
+  test('LIST_registeredModel flushes previous loaded models in state (2)', () => {
     const modelA = mockRegisteredModelDetailed('modelA');
     const modelB = mockRegisteredModelDetailed('modelB');
     const modelC = mockRegisteredModelDetailed('modelC');
     const state = { modelA, modelB };
     const action = {
-      type: fulfilled(LIST_REGISTERED_MODELS),
+      type: fulfilled(LIST_registeredModel),
       payload: {
-        registered_models: [modelB, modelC],
+        registeredModel: [modelB, modelC],
       },
     };
     expect(modelByName(state, action)).toEqual({ modelB, modelC });
   });
 
-  test('LIST_REGISTERED_MODELS flushes previous loaded models in state (3)', () => {
+  test('LIST_registeredModel flushes previous loaded models in state (3)', () => {
     const modelA = mockRegisteredModelDetailed('modelA');
     const modelB = mockRegisteredModelDetailed('modelB');
     const state = { modelA, modelB };
     const action = {
-      type: fulfilled(LIST_REGISTERED_MODELS),
+      type: fulfilled(LIST_registeredModel),
       payload: {
-        registered_models: [],
+        registeredModel: [],
       },
     };
     expect(modelByName(state, action)).toEqual({});
   });
 
-  test('LIST_REGISTERED_MODELS should have no effect on valid state', () => {
+  test('LIST_registeredModel should have no effect on valid state', () => {
     const modelA = mockRegisteredModelDetailed('modelA');
     const modelB = mockRegisteredModelDetailed('modelB');
     const state = { modelA, modelB };
     const action = {
-      type: fulfilled(LIST_REGISTERED_MODELS),
+      type: fulfilled(LIST_registeredModel),
       payload: {
-        registered_models: [modelB, modelA],
+        registeredModel: [modelB, modelA],
       },
     };
     expect(modelByName(state, action)).toEqual({ modelB, modelA });
@@ -196,28 +196,28 @@ describe('test modelVersionsByModel', () => {
     expect(modelVersionsByModel({ 1: versionA }, {})).toEqual({ 1: versionA });
   });
 
-  test('GET_MODEL_VERSION updates empty state correctly', () => {
+  test('GET_modelVersion updates empty state correctly', () => {
     const version1 = mockModelVersionDetailed('modelA', 1, 'Production', 'READY');
     const state = {};
     const action = {
-      type: fulfilled(GET_MODEL_VERSION),
+      type: fulfilled(GET_modelVersion),
       meta: { modelName: 'modelA' },
       payload: {
-        model_version: version1,
+        modelVersion: version1,
       },
     };
     expect(modelVersionsByModel(state, action)).toEqual({ modelA: { 1: version1 } });
   });
 
-  test('GET_MODEL_VERSION updates non-empty state correctly', () => {
+  test('GET_modelVersion updates non-empty state correctly', () => {
     const version1 = mockModelVersionDetailed('modelA', 1, 'Production', 'READY');
     const version2 = mockModelVersionDetailed('modelA', 2, 'Staging', 'READY');
     const state = { modelA: { 1: version1 } };
     const action = {
-      type: fulfilled(GET_MODEL_VERSION),
+      type: fulfilled(GET_modelVersion),
       meta: { modelName: 'modelA' },
       payload: {
-        model_version: version2,
+        modelVersion: version2,
       },
     };
     expect(modelVersionsByModel(state, action)).toEqual({
@@ -228,44 +228,44 @@ describe('test modelVersionsByModel', () => {
     });
   });
 
-  test('DELETE_MODEL_VERSION handles missing versions correctly', () => {
+  test('DELETE_modelVersion handles missing versions correctly', () => {
     const state = { modelA: {} };
     const action = {
       meta: { modelName: 'modelA', version: 1 },
-      type: fulfilled(DELETE_MODEL_VERSION),
+      type: fulfilled(DELETE_modelVersion),
     };
     expect(modelVersionsByModel(state, action)).toEqual({ ...state });
   });
 
-  test('DELETE_MODEL_VERSION updates state correctly (1)', () => {
+  test('DELETE_modelVersion updates state correctly (1)', () => {
     const version1 = mockModelVersionDetailed('modelA', 1, 'Production', 'READY');
     const state = { modelA: { 1: version1 } };
     const action = {
       meta: { modelName: 'modelA', version: 1 },
-      type: fulfilled(DELETE_MODEL_VERSION),
+      type: fulfilled(DELETE_modelVersion),
     };
     expect(modelVersionsByModel(state, action)).toEqual({ modelA: {} });
   });
 
-  test('DELETE_MODEL_VERSION updates state correctly (2)', () => {
+  test('DELETE_modelVersion updates state correctly (2)', () => {
     const version1 = mockModelVersionDetailed('modelA', 1, 'Production', 'READY');
     const version2 = mockModelVersionDetailed('modelA', 2, 'Staging', 'READY');
     const state = { modelA: { 1: version1, 2: version2 } };
     const action = {
       meta: { modelName: 'modelA', version: 1 },
-      type: fulfilled(DELETE_MODEL_VERSION),
+      type: fulfilled(DELETE_modelVersion),
     };
     expect(modelVersionsByModel(state, action)).toEqual({ modelA: { 2: version2 } });
   });
 
-  test('DELETE_MODEL_VERSION does not mess with other registered models', () => {
+  test('DELETE_modelVersion does not mess with other registered models', () => {
     const version1 = mockModelVersionDetailed('modelA', 1, 'Production', 'READY');
     const version2 = mockModelVersionDetailed('modelA', 2, 'Staging', 'READY');
     const version3 = mockModelVersionDetailed('modelB', 2, 'Staging', 'READY');
     const state = { modelA: { 1: version1, 2: version2 }, modelB: { 2: version3 } };
     const action = {
       meta: { modelName: 'modelA', version: 2 },
-      type: fulfilled(DELETE_MODEL_VERSION),
+      type: fulfilled(DELETE_modelVersion),
     };
     expect(modelVersionsByModel(state, action)).toEqual({
       modelA: { 1: version1 },
@@ -273,25 +273,25 @@ describe('test modelVersionsByModel', () => {
     });
   });
 
-  test('SEARCH_MODEL_VERSION handles empty state (1)', () => {
+  test('SEARCH_modelVersion handles empty state (1)', () => {
     const state = {};
     const action = {
-      type: fulfilled(SEARCH_MODEL_VERSIONS),
+      type: fulfilled(SEARCH_modelVersionS),
       payload: {
-        model_versions: [],
+        modelVersions: [],
       },
     };
     expect(modelVersionsByModel(state, action)).toEqual({});
   });
 
-  test('SEARCH_MODEL_VERSION handles empty state (2)', () => {
+  test('SEARCH_modelVersion handles empty state (2)', () => {
     const version1 = mockModelVersionDetailed('modelA', 1, 'Production', 'READY');
     const version2 = mockModelVersionDetailed('modelA', 2, 'Staging', 'READY');
     const state = {};
     const action = {
-      type: fulfilled(SEARCH_MODEL_VERSIONS),
+      type: fulfilled(SEARCH_modelVersionS),
       payload: {
-        model_versions: [version2, version1],
+        modelVersions: [version2, version1],
       },
     };
     expect(modelVersionsByModel(state, action)).toEqual({
@@ -302,14 +302,14 @@ describe('test modelVersionsByModel', () => {
     });
   });
 
-  test('SEARCH_MODEL_VERSION updates states correctly', () => {
+  test('SEARCH_modelVersion updates states correctly', () => {
     const version1 = mockModelVersionDetailed('modelA', 1, 'Production', 'READY');
     const version2 = mockModelVersionDetailed('modelA', 2, 'Staging', 'READY');
     const state = { modelX: {} };
     const action = {
-      type: fulfilled(SEARCH_MODEL_VERSIONS),
+      type: fulfilled(SEARCH_modelVersionS),
       payload: {
-        model_versions: [version2, version1],
+        modelVersions: [version2, version1],
       },
     };
     expect(modelVersionsByModel(state, action)).toEqual({
@@ -321,15 +321,15 @@ describe('test modelVersionsByModel', () => {
     });
   });
 
-  test('SEARCH_MODEL_VERSION refreshes state with new models', () => {
+  test('SEARCH_modelVersion refreshes state with new models', () => {
     const version1 = mockModelVersionDetailed('modelA', 1, 'Production', 'READY');
     const version2 = mockModelVersionDetailed('modelA', 2, 'Staging', 'READY');
     const version3 = mockModelVersionDetailed('modelA', 3, 'Staging', 'READY');
     const state = { modelA: { 1: version1, 2: version2 } };
     const action = {
-      type: fulfilled(SEARCH_MODEL_VERSIONS),
+      type: fulfilled(SEARCH_modelVersionS),
       payload: {
-        model_versions: [version3],
+        modelVersions: [version3],
       },
     };
     expect(modelVersionsByModel(state, action)).toEqual({
@@ -488,12 +488,12 @@ describe('test mlModelArtifactByModelVersion', () => {
     const action = {
       type: fulfilled(PARSE_MLMODEL_FILE),
       meta: { modelName: 'model_A', version: 2 },
-      payload: { artifact_path: 'xxx', run_id: 'xxx', signature: 'xxx' },
+      payload: { artifact_path: 'xxx', runId: 'xxx', signature: 'xxx' },
     };
     expect(mlModelArtifactByModelVersion(state, action)).toEqual({
       model_A: {
         '1': {},
-        '2': { artifact_path: 'xxx', run_id: 'xxx', signature: 'xxx' },
+        '2': { artifact_path: 'xxx', runId: 'xxx', signature: 'xxx' },
       },
     });
   });
@@ -503,12 +503,12 @@ describe('test mlModelArtifactByModelVersion', () => {
     const action = {
       type: fulfilled(PARSE_MLMODEL_FILE),
       meta: { modelName: 'model_B', version: 1 },
-      payload: { artifact_path: 'xxx', run_id: 'xxx', signature: 'xxx' },
+      payload: { artifact_path: 'xxx', runId: 'xxx', signature: 'xxx' },
     };
     expect(mlModelArtifactByModelVersion(state, action)).toEqual({
       model_A: { '1': {} },
       model_B: {
-        '1': { artifact_path: 'xxx', run_id: 'xxx', signature: 'xxx' },
+        '1': { artifact_path: 'xxx', runId: 'xxx', signature: 'xxx' },
       },
     });
   });
@@ -518,11 +518,11 @@ describe('test mlModelArtifactByModelVersion', () => {
     const action = {
       type: fulfilled(PARSE_MLMODEL_FILE),
       meta: { modelName: 'model_A', version: 1 },
-      payload: { artifact_path: 'xxx', run_id: 'xxx', signature: 'xxx' },
+      payload: { artifact_path: 'xxx', runId: 'xxx', signature: 'xxx' },
     };
     expect(mlModelArtifactByModelVersion(state, action)).toEqual({
       model_A: {
-        '1': { artifact_path: 'xxx', run_id: 'xxx', signature: 'xxx' },
+        '1': { artifact_path: 'xxx', runId: 'xxx', signature: 'xxx' },
       },
     });
   });
@@ -576,7 +576,7 @@ describe('test getModelVersionSchemas', () => {
       entities: {
         mlModelArtifactByModelVersion: {
           model_A: {
-            1: { artifact_path: 'xxx', run_id: 'xxx', signature: 'xxx' },
+            1: { artifact_path: 'xxx', runId: 'xxx', signature: 'xxx' },
           },
         },
       },
@@ -594,7 +594,7 @@ describe('test getModelVersionSchemas', () => {
           model_A: {
             1: {
               artifact_path: 'xxx',
-              run_id: 'xxx',
+              runId: 'xxx',
               signature: {
                 inputs:
                   '[{"name": "column1", "type": "long"}, ' +
@@ -621,7 +621,7 @@ describe('test getModelVersionSchemas', () => {
           model_A: {
             1: {
               artifact_path: 'xxx',
-              run_id: 'xxx',
+              runId: 'xxx',
               signature: {
                 outputs:
                   '[{"name": "column1", "type": "long"}, ' +
@@ -648,7 +648,7 @@ describe('test getModelVersionSchemas', () => {
           model_A: {
             1: {
               artifact_path: 'xxx',
-              run_id: 'xxx',
+              runId: 'xxx',
               signature: {
                 inputs:
                   '[{"name": "sepal length (cm)", "type": "double"}, ' +
@@ -855,20 +855,20 @@ describe('test getRegisteredModelTags', () => {
 });
 
 describe('test tagsByModelVersion', () => {
-  test('GET_MODEL_VERSION does not update tagsByModelVersion if version tags is empty', () => {
+  test('GET_modelVersion does not update tagsByModelVersion if version tags is empty', () => {
     const mv = mockModelVersionDetailed('modelA', 1, 'Production', 'READY');
     const state = {};
     const action = {
-      type: fulfilled(GET_MODEL_VERSION),
+      type: fulfilled(GET_modelVersion),
       meta: { modelName: 'modelA', version: 1 },
       payload: {
-        model_version: mv,
+        modelVersion: mv,
       },
     };
     expect(tagsByModelVersion(state, action)).toEqual({});
   });
 
-  test('GET_MODEL_VERSION with tags correctly updates tagsByModelVersion', () => {
+  test('GET_modelVersion with tags correctly updates tagsByModelVersion', () => {
     const mv = mockModelVersionDetailed('modelA', 1, 'Production', 'READY', [
       {
         key: 'special key',
@@ -881,10 +881,10 @@ describe('test tagsByModelVersion', () => {
     ]);
     const state = {};
     const action = {
-      type: fulfilled(GET_MODEL_VERSION),
+      type: fulfilled(GET_modelVersion),
       meta: { modelName: 'modelA', version: 1 },
       payload: {
-        model_version: mv,
+        modelVersion: mv,
       },
     };
     expect(tagsByModelVersion(state, action)).toEqual({
@@ -903,10 +903,10 @@ describe('test tagsByModelVersion', () => {
     });
   });
 
-  test('SET_MODEL_VERSION_TAG correctly updates tagsByModelVersion', () => {
+  test('SET_modelVersion_TAG correctly updates tagsByModelVersion', () => {
     const state = {};
     const action = {
-      type: fulfilled(SET_MODEL_VERSION_TAG),
+      type: fulfilled(SET_modelVersion_TAG),
       meta: { modelName: 'modelA', version: 1, key: 'special key', value: 'not so special value' },
       payload: {},
     };
@@ -922,7 +922,7 @@ describe('test tagsByModelVersion', () => {
     });
   });
 
-  test('SET_MODEL_VERSION_TAG with the same key overrides original value', () => {
+  test('SET_modelVersion_TAG with the same key overrides original value', () => {
     const state = {
       modelA: {
         1: {
@@ -934,7 +934,7 @@ describe('test tagsByModelVersion', () => {
       },
     };
     const action = {
-      type: fulfilled(SET_MODEL_VERSION_TAG),
+      type: fulfilled(SET_modelVersion_TAG),
       meta: { modelName: 'modelA', version: 1, key: 'special key', value: 'not so special value' },
       payload: {},
     };
@@ -950,7 +950,7 @@ describe('test tagsByModelVersion', () => {
     });
   });
 
-  test('DELETE_MODEL_VERSION_TAG correctly updates tagsByModelVersion', () => {
+  test('DELETE_modelVersion_TAG correctly updates tagsByModelVersion', () => {
     const state = {
       modelA: {
         1: {
@@ -966,7 +966,7 @@ describe('test tagsByModelVersion', () => {
       },
     };
     const action = {
-      type: fulfilled(DELETE_MODEL_VERSION_TAG),
+      type: fulfilled(DELETE_modelVersion_TAG),
       meta: { modelName: 'modelA', version: 1, key: 'another key' },
       payload: {},
     };
@@ -982,7 +982,7 @@ describe('test tagsByModelVersion', () => {
     });
   });
 
-  test('DELETE_MODEL_VERSION_TAG deletes the model version when it no longer have any tags', () => {
+  test('DELETE_modelVersion_TAG deletes the model version when it no longer have any tags', () => {
     const state = {
       modelA: {
         1: {
@@ -1000,7 +1000,7 @@ describe('test tagsByModelVersion', () => {
       },
     };
     const action = {
-      type: fulfilled(DELETE_MODEL_VERSION_TAG),
+      type: fulfilled(DELETE_modelVersion_TAG),
       meta: { modelName: 'modelA', version: 1, key: 'another key' },
       payload: {},
     };
@@ -1016,7 +1016,7 @@ describe('test tagsByModelVersion', () => {
     });
   });
 
-  test('DELETE_MODEL_VERSION_TAG deletes the model when it no longer have any tags', () => {
+  test('DELETE_modelVersion_TAG deletes the model when it no longer have any tags', () => {
     const state = {
       modelA: {
         1: {
@@ -1028,7 +1028,7 @@ describe('test tagsByModelVersion', () => {
       },
     };
     const action = {
-      type: fulfilled(DELETE_MODEL_VERSION_TAG),
+      type: fulfilled(DELETE_modelVersion_TAG),
       meta: { modelName: 'modelA', version: 1, key: 'another key' },
       payload: {},
     };

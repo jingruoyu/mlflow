@@ -47,7 +47,7 @@ describe('ShowArtifactPage', () => {
           key: 'mlflow.log-model.history',
           value: JSON.stringify([
             {
-              run_id: 'run-uuid',
+              runId: 'run-uuid',
               artifact_path: 'somePath',
               flavors: { keras: {}, python_function: {} },
             },

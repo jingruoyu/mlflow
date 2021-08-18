@@ -1,15 +1,15 @@
 import {
-  LIST_REGISTERED_MODELS,
-  SEARCH_REGISTERED_MODELS,
-  SEARCH_MODEL_VERSIONS,
+  LIST_registeredModel,
+  SEARCH_registeredModel,
+  SEARCH_modelVersionS,
   GET_REGISTERED_MODEL,
-  GET_MODEL_VERSION,
-  DELETE_MODEL_VERSION,
+  GET_modelVersion,
+  DELETE_modelVersion,
   DELETE_REGISTERED_MODEL,
   SET_REGISTERED_MODEL_TAG,
   DELETE_REGISTERED_MODEL_TAG,
-  SET_MODEL_VERSION_TAG,
-  DELETE_MODEL_VERSION_TAG,
+  SET_modelVersion_TAG,
+  DELETE_modelVersion_TAG,
   PARSE_MLMODEL_FILE,
 } from './actions';
 import { getProtoField } from './utils';
@@ -19,10 +19,10 @@ import { RegisteredModelTag, ModelVersionTag } from './sdk/ModelRegistryMessages
 
 const modelByName = (state = {}, action) => {
   switch (action.type) {
-    case fulfilled(SEARCH_REGISTERED_MODELS):
+    case fulfilled(SEARCH_registeredModel):
     // eslint-disable-next-line no-fallthrough
-    case fulfilled(LIST_REGISTERED_MODELS): {
-      const models = action.payload[getProtoField('registered_models')];
+    case fulfilled(LIST_registeredModel): {
+      const models = action.payload[getProtoField('registeredModel')];
       const nameToModelMap = {};
       if (models) {
         models.forEach((model) => (nameToModelMap[model.name] = model));
@@ -31,7 +31,7 @@ const modelByName = (state = {}, action) => {
         ...nameToModelMap,
       };
     }
-    case rejected(SEARCH_REGISTERED_MODELS): {
+    case rejected(SEARCH_registeredModel): {
       return {};
     }
     case fulfilled(GET_REGISTERED_MODEL): {
@@ -58,8 +58,8 @@ const modelByName = (state = {}, action) => {
 // 2-levels lookup for model version indexed by (modelName, version)
 const modelVersionsByModel = (state = {}, action) => {
   switch (action.type) {
-    case fulfilled(GET_MODEL_VERSION): {
-      const modelVersion = action.payload[getProtoField('model_version')];
+    case fulfilled(GET_modelVersion): {
+      const modelVersion = action.payload[getProtoField('modelVersion')];
       const { modelName } = action.meta;
       const updatedMap = {
         ...state[modelName],
@@ -70,8 +70,8 @@ const modelVersionsByModel = (state = {}, action) => {
         [modelName]: updatedMap,
       };
     }
-    case fulfilled(SEARCH_MODEL_VERSIONS): {
-      const modelVersions = action.payload[getProtoField('model_versions')];
+    case fulfilled(SEARCH_modelVersionS): {
+      const modelVersions = action.payload[getProtoField('modelVersions')];
       if (!modelVersions) {
         return state;
       }
@@ -91,7 +91,7 @@ const modelVersionsByModel = (state = {}, action) => {
         { ...state },
       );
     }
-    case fulfilled(DELETE_MODEL_VERSION): {
+    case fulfilled(DELETE_modelVersion): {
       const { modelName, version } = action.meta;
       const modelVersionByVersion = state[modelName];
       return {
@@ -232,8 +232,8 @@ const tagsByModelVersion = (state = {}, action) => {
     return tagObj;
   };
   switch (action.type) {
-    case fulfilled(GET_MODEL_VERSION): {
-      const modelVersion = action.payload[getProtoField('model_version')];
+    case fulfilled(GET_modelVersion): {
+      const modelVersion = action.payload[getProtoField('modelVersion')];
       const { modelName, version } = action.meta;
       if (modelVersion.tags && modelVersion.tags.length > 0) {
         const { tags } = modelVersion;
@@ -245,7 +245,7 @@ const tagsByModelVersion = (state = {}, action) => {
         return state;
       }
     }
-    case fulfilled(SET_MODEL_VERSION_TAG): {
+    case fulfilled(SET_modelVersion_TAG): {
       const { modelName, version, key, value } = action.meta;
       const tag = ModelVersionTag.fromJs({
         key: key,
@@ -264,7 +264,7 @@ const tagsByModelVersion = (state = {}, action) => {
         },
       };
     }
-    case fulfilled(DELETE_MODEL_VERSION_TAG): {
+    case fulfilled(DELETE_modelVersion_TAG): {
       const { modelName, version, key } = action.meta;
       const oldTags = state[modelName] ? state[modelName][version] || {} : {};
       const newState = { ...state };

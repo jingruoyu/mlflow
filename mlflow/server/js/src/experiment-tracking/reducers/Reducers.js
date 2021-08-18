@@ -24,7 +24,7 @@ import {
   isRejectedApi,
   rejected,
 } from '../../common/utils/ActionUtils';
-import { SEARCH_MODEL_VERSIONS } from '../../model-registry/actions';
+import { SEARCH_modelVersionS } from '../../model-registry/actions';
 import { getProtoField } from '../../model-registry/utils';
 
 export const getExperiments = (state) => {
@@ -104,17 +104,17 @@ export const runInfosByUuid = (state = {}, action) => {
 
 export const modelVersionsByRunUuid = (state = {}, action) => {
   switch (action.type) {
-    case fulfilled(SEARCH_MODEL_VERSIONS): {
+    case fulfilled(SEARCH_modelVersionS): {
       let newState = { ...state };
       const updatedState = {};
       if (action.payload) {
-        const modelVersions = action.payload[getProtoField('model_versions')];
+        const modelVersions = action.payload[getProtoField('modelVersions')];
         if (modelVersions) {
-          modelVersions.forEach((model_version) => {
-            if (model_version.run_id in updatedState) {
-              updatedState[model_version.run_id].push(model_version);
+          modelVersions.forEach((modelVersion) => {
+            if (modelVersion.runId in updatedState) {
+              updatedState[modelVersion.runId].push(modelVersion);
             } else {
-              updatedState[model_version.run_id] = [model_version];
+              updatedState[modelVersion.runId] = [modelVersion];
             }
           });
         }

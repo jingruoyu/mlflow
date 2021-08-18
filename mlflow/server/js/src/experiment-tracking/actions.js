@@ -68,7 +68,7 @@ export const GET_RUN_API = 'GET_RUN_API';
 export const getRunApi = (runId, id = getUUID()) => {
   return {
     type: GET_RUN_API,
-    payload: wrapDeferred(MlflowService.getRun, { run_id: runId }),
+    payload: wrapDeferred(MlflowService.getRun, { runId: runId }),
     meta: { id: id },
   };
 };
@@ -78,7 +78,7 @@ export const deleteRunApi = (runUuid, id = getUUID()) => {
   return (dispatch) => {
     const deleteResponse = dispatch({
       type: DELETE_RUN_API,
-      payload: wrapDeferred(MlflowService.deleteRun, { run_id: runUuid }),
+      payload: wrapDeferred(MlflowService.deleteRun, { runId: runUuid }),
       meta: { id: getUUID() },
     });
     return deleteResponse.then(() => dispatch(getRunApi(runUuid, id)));
@@ -89,7 +89,7 @@ export const restoreRunApi = (runUuid, id = getUUID()) => {
   return (dispatch) => {
     const restoreResponse = dispatch({
       type: RESTORE_RUN_API,
-      payload: wrapDeferred(MlflowService.restoreRun, { run_id: runUuid }),
+      payload: wrapDeferred(MlflowService.restoreRun, { runId: runUuid }),
       meta: { id: getUUID() },
     });
     return restoreResponse.then(() => dispatch(getRunApi(runUuid, id)));
@@ -101,7 +101,7 @@ export const getParentRunTagName = () => 'mlflow.parentRunId';
 export const getParentRunIdsToFetch = (runs) => {
   const parentsToFetch = new Set();
   if (runs) {
-    const currentRunIds = new Set(runs.map((run) => run.info.run_id));
+    const currentRunIds = new Set(runs.map((run) => run.info.runId));
 
     runs.forEach((run) => {
       if (run.data && run.data.tags) {
@@ -122,7 +122,7 @@ export const fetchMissingParents = (searchRunsResponse) =>
   searchRunsResponse.runs && searchRunsResponse.runs.length
     ? Promise.all(
         getParentRunIdsToFetch(searchRunsResponse.runs).map((runId) =>
-          wrapDeferred(MlflowService.getRun, { run_id: runId }),
+          wrapDeferred(MlflowService.getRun, { runId: runId }),
         ),
       )
         .then((parentRuns) => {
@@ -175,7 +175,7 @@ export const loadMoreRunsApi = (params) => ({
   meta: { id: params.id || getUUID() },
 });
 
-// TODO: run_uuid is deprecated, use run_id instead
+// TODO: run_uuid is deprecated, use runId instead
 export const LIST_ARTIFACTS_API = 'LIST_ARTIFACTS_API';
 export const listArtifactsApi = (runUuid, path, id = getUUID()) => {
   return {
@@ -188,7 +188,7 @@ export const listArtifactsApi = (runUuid, path, id = getUUID()) => {
   };
 };
 
-// TODO: run_uuid is deprecated, use run_id instead
+// TODO: run_uuid is deprecated, use runId instead
 export const GET_METRIC_HISTORY_API = 'GET_METRIC_HISTORY_API';
 export const getMetricHistoryApi = (runUuid, metricKey, id = getUUID()) => {
   return {
@@ -201,7 +201,7 @@ export const getMetricHistoryApi = (runUuid, metricKey, id = getUUID()) => {
   };
 };
 
-// TODO: run_uuid is deprecated, use run_id instead
+// TODO: run_uuid is deprecated, use runId instead
 export const SET_TAG_API = 'SET_TAG_API';
 export const setTagApi = (runUuid, tagName, tagValue, id = getUUID()) => {
   return {
@@ -215,13 +215,13 @@ export const setTagApi = (runUuid, tagName, tagValue, id = getUUID()) => {
   };
 };
 
-// TODO: run_uuid is deprecated, use run_id instead
+// TODO: run_uuid is deprecated, use runId instead
 export const DELETE_TAG_API = 'DELETE_TAG_API';
 export const deleteTagApi = (runUuid, tagName, id = getUUID()) => {
   return {
     type: DELETE_TAG_API,
     payload: wrapDeferred(MlflowService.deleteTag, {
-      run_id: runUuid,
+      runId: runUuid,
       key: tagName,
     }),
     meta: { id: id, runUuid: runUuid, key: tagName },

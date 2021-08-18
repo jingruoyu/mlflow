@@ -7,7 +7,7 @@ import { listArtifactsApi } from '../actions';
 import { searchModelVersionsApi } from '../../model-registry/actions';
 import { connect } from 'react-redux';
 import { getArtifactRootUri } from '../reducers/Reducers';
-import { MODEL_VERSION_STATUS_POLL_INTERVAL as POLL_INTERVAL } from '../../model-registry/constants';
+import { modelVersion_STATUS_POLL_INTERVAL as POLL_INTERVAL } from '../../model-registry/constants';
 import RequestStateWrapper from '../../common/components/RequestStateWrapper';
 import Utils from '../../common/utils/Utils';
 import { getUUID } from '../../common/utils/ActionUtils';
@@ -58,7 +58,7 @@ export class ArtifactPageImpl extends Component {
     const searchRequest = apis[this.searchRequestId];
     if (activeNodeIsDirectory && !(searchRequest && searchRequest.active)) {
       this.props
-        .searchModelVersionsApi({ run_id: runUuid }, this.searchRequestId)
+        .searchModelVersionsApi({ runId: runUuid }, this.searchRequestId)
         .catch(console.error);
     }
   };

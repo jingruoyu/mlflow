@@ -64,13 +64,13 @@ export const mockExperiment = (eid, name) => {
 };
 
 export const mockRunInfo = (
-  run_id,
+  runId,
   experiment_id = undefined,
   artifact_uri = undefined,
   lifecycle_stage = undefined,
 ) => {
   return RunInfo.fromJs({
-    run_uuid: run_id,
+    run_uuid: runId,
     experiment_id: experiment_id,
     artifact_uri: artifact_uri,
     lifecycle_stage: lifecycle_stage,

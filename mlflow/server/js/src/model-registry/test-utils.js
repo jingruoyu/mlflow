@@ -1,7 +1,7 @@
 export const mockRegisteredModelDetailed = (name, latestVersions = [], tags = []) => {
   return {
-    creation_timestamp: 1571344731467,
-    last_updated_timestamp: 1573581360069,
+    creationTimestamp: 1571344731467,
+    lastUpdatedTimestamp: 1573581360069,
     latest_versions: latestVersions,
     name,
     tags,
@@ -14,21 +14,21 @@ export const mockModelVersionDetailed = (
   stage,
   status,
   tags = [],
-  run_link = undefined,
-  run_id = 'b99a0fc567ae4d32994392c800c0b6ce',
+  runLink = undefined,
+  runId = 'b99a0fc567ae4d32994392c800c0b6ce',
 ) => {
   return {
     name,
-    // Use version-based timestamp to make creation_timestamp differ across model versions
+    // Use version-based timestamp to make creationTimestamp differ across model versions
     // and prevent React duplicate key warning.
-    creation_timestamp: version.toString(),
-    last_updated_timestamp: (version + 1).toString(),
+    creationTimestamp: version.toString(),
+    lastUpdatedTimestamp: (version + 1).toString(),
     user_id: 'richard@example.com',
-    current_stage: stage,
+    currentStage: stage,
     description: '',
     source: 'path/to/model',
-    run_id: run_id,
-    run_link: run_link,
+    runId: runId,
+    runLink: runLink,
     status,
     version,
     tags,

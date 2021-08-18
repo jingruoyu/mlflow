@@ -38,7 +38,7 @@ import {
 import { fulfilled, pending, rejected } from '../../common/utils/ActionUtils';
 import { deepFreeze } from '../../common/utils/TestUtils';
 import { mockModelVersionDetailed } from '../../model-registry/test-utils';
-import { SEARCH_MODEL_VERSIONS } from '../../model-registry/actions';
+import { SEARCH_modelVersionS } from '../../model-registry/actions';
 import { Stages, ModelVersionStatus } from '../../model-registry/constants';
 
 describe('test experimentsById', () => {
@@ -289,7 +289,7 @@ describe('test modelVersionsByUuid', () => {
   test('search api with no payload', () => {
     expect(
       runInfosByUuid(undefined, {
-        type: fulfilled(SEARCH_MODEL_VERSIONS),
+        type: fulfilled(SEARCH_modelVersionS),
       }),
     ).toEqual({});
   });
@@ -317,9 +317,9 @@ describe('test modelVersionsByUuid', () => {
     );
     const state = undefined;
     const action = {
-      type: fulfilled(SEARCH_MODEL_VERSIONS),
+      type: fulfilled(SEARCH_modelVersionS),
       payload: {
-        model_versions: [mvA, mvB],
+        modelVersions: [mvA, mvB],
       },
     };
     const new_state = deepFreeze(modelVersionsByRunUuid(state, action));
@@ -375,9 +375,9 @@ describe('test modelVersionsByUuid', () => {
       [run2.getRunUuid()]: [mvB, mvC],
     });
     const action = {
-      type: fulfilled(SEARCH_MODEL_VERSIONS),
+      type: fulfilled(SEARCH_modelVersionS),
       payload: {
-        model_versions: [mvA, mvB, mvD],
+        modelVersions: [mvA, mvB, mvD],
       },
     };
     const new_state = modelVersionsByRunUuid(state, action);

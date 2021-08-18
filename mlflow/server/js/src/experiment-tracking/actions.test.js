@@ -7,7 +7,7 @@ import {
 import { MlflowService } from './sdk/MlflowService';
 
 const a = {
-  info: { run_id: 'a' },
+  info: { runId: 'a' },
   data: {
     tags: [
       {
@@ -18,7 +18,7 @@ const a = {
   },
 };
 const b = {
-  info: { run_id: 'b' },
+  info: { runId: 'b' },
   data: {
     tags: [
       {
@@ -28,8 +28,8 @@ const b = {
     ],
   },
 };
-const aParent = { info: { run_id: 'aParent' } };
-const bParent = { info: { run_id: 'bParent' } };
+const aParent = { info: { runId: 'aParent' } };
+const bParent = { info: { runId: 'bParent' } };
 
 beforeAll(() => {
   jest
@@ -38,7 +38,7 @@ beforeAll(() => {
 
   jest
     .spyOn(MlflowService, 'getRun')
-    .mockImplementation(({ data, success }) => success({ run: { info: { run_id: data.run_id } } }));
+    .mockImplementation(({ data, success }) => success({ run: { info: { runId: data.runId } } }));
 });
 
 afterAll(() => {

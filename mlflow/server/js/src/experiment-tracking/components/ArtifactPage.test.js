@@ -5,11 +5,11 @@ import { ArtifactNode } from '../utils/ArtifactUtils';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { ErrorWrapper, pending } from '../../common/utils/ActionUtils';
-import { SEARCH_MODEL_VERSIONS } from '../../model-registry/actions';
+import { SEARCH_modelVersionS } from '../../model-registry/actions';
 import {
   ModelVersionStatus,
   Stages,
-  MODEL_VERSION_STATUS_POLL_INTERVAL as POLL_INTERVAL,
+  modelVersion_STATUS_POLL_INTERVAL as POLL_INTERVAL,
 } from '../../model-registry/constants';
 import Utils from '../../common/utils/Utils';
 import { mockModelVersionDetailed } from '../../model-registry/test-utils';
@@ -153,7 +153,7 @@ describe('ArtifactPage', () => {
     wrapper.instance().handleActiveNodeChange(true);
     jest.runTimersToTime(POLL_INTERVAL * 3);
     const expectedActions = minimalStore.getActions().filter((action) => {
-      return action.type === pending(SEARCH_MODEL_VERSIONS);
+      return action.type === pending(SEARCH_modelVersionS);
     });
     expect(expectedActions).toHaveLength(3);
   });
@@ -170,7 +170,7 @@ describe('ArtifactPage', () => {
     wrapper.instance().handleActiveNodeChange(true);
     jest.runTimersToTime(POLL_INTERVAL * 3);
     const expectedActions = minimalStore.getActions().filter((action) => {
-      return action.type === pending(SEARCH_MODEL_VERSIONS);
+      return action.type === pending(SEARCH_modelVersionS);
     });
     expect(expectedActions).toHaveLength(0);
 
@@ -188,7 +188,7 @@ describe('ArtifactPage', () => {
 
     jest.runTimersToTime(POLL_INTERVAL * 3);
     const expectedActions = minimalStore.getActions().filter((action) => {
-      return action.type === pending(SEARCH_MODEL_VERSIONS);
+      return action.type === pending(SEARCH_modelVersionS);
     });
     expect(expectedActions).toHaveLength(0);
   });

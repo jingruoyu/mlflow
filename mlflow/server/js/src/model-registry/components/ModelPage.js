@@ -9,7 +9,7 @@ import {
 } from '../actions';
 import { ModelView } from './ModelView';
 import { getModelVersions } from '../reducers';
-import { MODEL_VERSION_STATUS_POLL_INTERVAL as POLL_INTERVAL } from '../constants';
+import { modelVersion_STATUS_POLL_INTERVAL as POLL_INTERVAL } from '../constants';
 import RequestStateWrapper, { triggerError } from '../../common/components/RequestStateWrapper';
 import { Spinner } from '../../common/components/Spinner';
 import { ErrorView } from '../../common/components/ErrorView';

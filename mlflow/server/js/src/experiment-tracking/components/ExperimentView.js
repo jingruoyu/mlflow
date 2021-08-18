@@ -20,7 +20,7 @@ import ExperimentRunsTableCompactView from './ExperimentRunsTableCompactView';
 import {
   LIFECYCLE_FILTER,
   MAX_DETECT_NEW_RUNS_RESULTS,
-  MODEL_VERSION_FILTER,
+  modelVersion_FILTER,
 } from './ExperimentPage';
 import ExperimentViewUtil from './ExperimentViewUtil';
 import DeleteRunModal from './modals/DeleteRunModal';
@@ -730,15 +730,15 @@ export class ExperimentView extends Component {
                     dropdownOptions={
                       <Menu onClick={this.handleModelVersionFilterInput}>
                         {this.getModelVersionMenuItem(
-                          MODEL_VERSION_FILTER.ALL_RUNS,
+                          modelVersion_FILTER.ALL_RUNS,
                           'all-runs-menu-item',
                         )}
                         {this.getModelVersionMenuItem(
-                          MODEL_VERSION_FILTER.WITH_MODEL_VERSIONS,
+                          modelVersion_FILTER.WITH_modelVersionS,
                           'model-versions-runs-menu-item',
                         )}
                         {this.getModelVersionMenuItem(
-                          MODEL_VERSION_FILTER.WTIHOUT_MODEL_VERSIONS,
+                          modelVersion_FILTER.WTIHOUT_modelVersionS,
                           'no-model-versions-runs-menu-item',
                         )}
                       </Menu>
@@ -982,7 +982,7 @@ export class ExperimentView extends Component {
         metricKeyFilterInput: '',
         searchInput: '',
         lifecycleFilterInput: LIFECYCLE_FILTER.ACTIVE,
-        modelVersionFilterInput: MODEL_VERSION_FILTER.ALL_RUNS,
+        modelVersionFilterInput: modelVersion_FILTER.ALL_RUNS,
         orderByKey: null,
         orderByAsc: true,
       });
@@ -1138,7 +1138,7 @@ export const mapStateToProps = (state, ownProps) => {
   const { modelVersionsByRunUuid } = state.entities;
 
   const runInfos = runUuids
-    .map((run_id) => getRunInfo(run_id, state))
+    .map((runId) => getRunInfo(runId, state))
     .filter((rInfo) => {
       if (lifecycleFilter === LIFECYCLE_FILTER.ACTIVE) {
         return rInfo.lifecycle_stage === 'active';
@@ -1147,11 +1147,11 @@ export const mapStateToProps = (state, ownProps) => {
       }
     })
     .filter((rInfo) => {
-      if (modelVersionFilter === MODEL_VERSION_FILTER.ALL_RUNS) {
+      if (modelVersionFilter === modelVersion_FILTER.ALL_RUNS) {
         return true;
-      } else if (modelVersionFilter === MODEL_VERSION_FILTER.WITH_MODEL_VERSIONS) {
+      } else if (modelVersionFilter === modelVersion_FILTER.WITH_modelVersionS) {
         return rInfo.run_uuid in modelVersionsByRunUuid;
-      } else if (modelVersionFilter === MODEL_VERSION_FILTER.WTIHOUT_MODEL_VERSIONS) {
+      } else if (modelVersionFilter === modelVersion_FILTER.WTIHOUT_modelVersionS) {
         return !(rInfo.run_uuid in modelVersionsByRunUuid);
       } else {
         console.warn('Invalid input to model version filter - defaulting to showing all runs.');

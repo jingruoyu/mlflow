@@ -10,9 +10,9 @@ import {
   Stages,
   StageTagComponents,
   EMPTY_CELL_PLACEHOLDER,
-  REGISTERED_MODELS_PER_PAGE,
-  REGISTERED_MODELS_SEARCH_NAME_FIELD,
-  REGISTERED_MODELS_SEARCH_TIMESTAMP_FIELD,
+  registeredModel_PER_PAGE,
+  registeredModel_SEARCH_NAME_FIELD,
+  registeredModel_SEARCH_TIMESTAMP_FIELD,
 } from '../constants';
 import {
   ModelRegistryDocUrl,
@@ -37,13 +37,13 @@ import { mlPagePadding } from '../../shared/styleConstants';
 import { FormattedMessage, injectIntl } from 'react-intl';
 
 const NAME_COLUMN_INDEX = 'name';
-const LAST_MODIFIED_COLUMN_INDEX = 'last_updated_timestamp';
+const LAST_MODIFIED_COLUMN_INDEX = 'lastUpdatedTimestamp';
 
 const getOverallLatestVersionNumber = (latest_versions) =>
   latest_versions && Math.max(...latest_versions.map((v) => v.version));
 
 const getLatestVersionNumberByStage = (latest_versions, stage) => {
-  const modelVersion = latest_versions && latest_versions.find((v) => v.current_stage === stage);
+  const modelVersion = latest_versions && latest_versions.find((v) => v.currentStage === stage);
   return modelVersion && modelVersion.version;
 };
 
@@ -53,7 +53,7 @@ export class ModelListViewImpl extends React.Component {
     this.state = {
       loading: false,
       lastNavigationActionWasClickPrev: false,
-      maxResultsSelection: REGISTERED_MODELS_PER_PAGE,
+      maxResultsSelection: registeredModel_PER_PAGE,
       showOnboardingHelper: this.showOnboardingHelper(),
       showFilters: false,
       nameSearchInput: props.nameSearchInput,
@@ -151,7 +151,7 @@ export class ModelListViewImpl extends React.Component {
           return <Link to={getModelPageRoute(row.name)}>{text}</Link>;
         },
         sorter: true,
-        ...this.getSortOrder(REGISTERED_MODELS_SEARCH_NAME_FIELD),
+        ...this.getSortOrder(registeredModel_SEARCH_NAME_FIELD),
       },
       {
         title: this.props.intl.formatMessage({
@@ -194,9 +194,9 @@ export class ModelListViewImpl extends React.Component {
         }),
         className: 'last-modified',
         dataIndex: LAST_MODIFIED_COLUMN_INDEX,
-        render: (text, row) => <span>{Utils.formatTimestamp(row.last_updated_timestamp)}</span>,
+        render: (text, row) => <span>{Utils.formatTimestamp(row.lastUpdatedTimestamp)}</span>,
         sorter: true,
-        ...this.getSortOrder(REGISTERED_MODELS_SEARCH_TIMESTAMP_FIELD),
+        ...this.getSortOrder(registeredModel_SEARCH_TIMESTAMP_FIELD),
       },
       {
         title: this.props.intl.formatMessage({
@@ -241,9 +241,9 @@ export class ModelListViewImpl extends React.Component {
   static getSortFieldName = (column) => {
     switch (column) {
       case NAME_COLUMN_INDEX:
-        return REGISTERED_MODELS_SEARCH_NAME_FIELD;
+        return registeredModel_SEARCH_NAME_FIELD;
       case LAST_MODIFIED_COLUMN_INDEX:
-        return REGISTERED_MODELS_SEARCH_TIMESTAMP_FIELD;
+        return registeredModel_SEARCH_TIMESTAMP_FIELD;
       default:
         return null;
     }
@@ -461,7 +461,7 @@ export class ModelListViewImpl extends React.Component {
             onClickNext={this.handleClickNext}
             onClickPrev={this.handleClickPrev}
             handleSetMaxResult={this.handleSetMaxResult}
-            maxResultOptions={[REGISTERED_MODELS_PER_PAGE, 25, 50, 100]}
+            maxResultOptions={[registeredModel_PER_PAGE, 25, 50, 100]}
             getSelectedPerPageSelection={this.props.getMaxResultValue}
           />
         </div>

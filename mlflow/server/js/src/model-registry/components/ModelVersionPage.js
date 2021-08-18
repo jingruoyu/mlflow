@@ -12,7 +12,7 @@ import { getRunApi } from '../../experiment-tracking/actions';
 import PropTypes from 'prop-types';
 import { getModelVersion, getModelVersionSchemas } from '../reducers';
 import { ModelVersionView } from './ModelVersionView';
-import { ActivityTypes, MODEL_VERSION_STATUS_POLL_INTERVAL as POLL_INTERVAL } from '../constants';
+import { ActivityTypes, modelVersion_STATUS_POLL_INTERVAL as POLL_INTERVAL } from '../constants';
 import Utils from '../../common/utils/Utils';
 import { getRunInfo, getRunTags } from '../../experiment-tracking/reducers/Reducers';
 import RequestStateWrapper, { triggerError } from '../../common/components/RequestStateWrapper';
@@ -101,8 +101,8 @@ export class ModelVersionPageImpl extends React.Component {
           : this.getModelVersionDetailsRequestId,
       )
       .then(({ value }) => {
-        if (value && !value[getProtoField('model_version')].run_link) {
-          this.props.getRunApi(value[getProtoField('model_version')].run_id, this.getRunRequestId);
+        if (value && !value[getProtoField('modelVersion')].runLink) {
+          this.props.getRunApi(value[getProtoField('modelVersion')].runId, this.getRunRequestId);
         }
       });
   }
@@ -228,8 +228,8 @@ const mapStateToProps = (state, ownProps) => {
   const modelVersion = getModelVersion(state, modelName, version);
   const schema = getModelVersionSchemas(state, modelName, version);
   let runInfo = null;
-  if (modelVersion && !modelVersion.run_link) {
-    runInfo = getRunInfo(modelVersion && modelVersion.run_id, state);
+  if (modelVersion && !modelVersion.runLink) {
+    runInfo = getRunInfo(modelVersion && modelVersion.runId, state);
   }
   const tags = runInfo && getRunTags(runInfo.getRunUuid(), state);
   const runDisplayName = tags && Utils.getRunDisplayName(tags, runInfo.getRunUuid());

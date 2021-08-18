@@ -17,7 +17,7 @@ describe('ExperimentRunsTableMultiColumnView2', () => {
       key: 'mlflow.log-model.history',
       value: JSON.stringify([
         {
-          run_id: 'run-uuid',
+          runId: 'run-uuid',
           artifact_path: 'somePath',
           utc_time_created: '2020-10-22',
           flavors: { keras: {}, python_function: {} },
@@ -185,7 +185,7 @@ describe('ExperimentRunsTableMultiColumnView2', () => {
         key: 'mlflow.log-model.history',
         value: JSON.stringify([
           {
-            run_id: 'run-uuid',
+            runId: 'run-uuid',
             artifact_path: `${runArtifactPath}`,
             utc_time_created: '2020-10-22',
             flavors: { keras: {}, python_function: {} },
@@ -222,13 +222,13 @@ describe('ExperimentRunsTableMultiColumnView2', () => {
         key: 'mlflow.log-model.history',
         value: JSON.stringify([
           {
-            run_id: 'run-uuid',
+            runId: 'run-uuid',
             artifact_path: 'somePath',
             utc_time_created: '2020-10-22',
             flavors: { keras: {}, python_function: {} },
           },
           {
-            run_id: 'run-uuid',
+            runId: 'run-uuid',
             artifact_path: 'someOtherPath',
             utc_time_created: '2020-10-22',
             flavors: { keras: {}, python_function: {} },

@@ -126,14 +126,14 @@ describe('ExperimentViewUtil', () => {
 
   test('get linked model cell displays model name with a single model version', () => {
     const modelName = 'model1';
-    const model_versions = [{ name: modelName, version: 2 }];
-    const linkedModelDiv = shallow(ExperimentViewUtil.getLinkedModelCell(model_versions));
+    const modelVersions = [{ name: modelName, version: 2 }];
+    const linkedModelDiv = shallow(ExperimentViewUtil.getLinkedModelCell(modelVersions));
     expect(
       linkedModelDiv
         .find('.model-version-link')
         .at(0)
         .props().href,
-    ).toContain(getModelVersionPageRoute(model_versions[0].name, model_versions[0].version));
+    ).toContain(getModelVersionPageRoute(modelVersions[0].name, modelVersions[0].version));
   });
 
   test('should not nest children if nestChildren is false', () => {

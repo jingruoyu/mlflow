@@ -13,7 +13,7 @@ const activeRequest = {
 const completeRequest = {
   id: 'a',
   active: false,
-  data: { run_id: 'run_id' },
+  data: { runId: 'runId' },
 };
 
 const errorRequest = {

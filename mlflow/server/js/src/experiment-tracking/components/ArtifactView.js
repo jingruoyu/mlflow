@@ -378,7 +378,7 @@ function ModelVersionInfoSection(props) {
               description='Label to display at what date the model was registered'
               values={{
                 registeredDate: Utils.formatTimestamp(
-                  modelVersion.creation_timestamp,
+                  modelVersion.creationTimestamp,
                   'yyyy/mm/dd',
                 ),
               }}

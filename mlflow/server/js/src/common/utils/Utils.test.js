@@ -330,7 +330,7 @@ test('getMetricPlotStateFromUrl', () => {
   const url0 =
     '?runs=["runUuid1","runUuid2"]&plot_metric_keys=[]' +
     '&plot_layout={"xaxis":{"a": "b"}}&x_axis=step&y_axis_scale=log' +
-    '&line_smoothness=0.53&show_point=true&selected_run_ids=["runUuid1"]';
+    '&line_smoothness=0.53&show_point=true&selected_runIds=["runUuid1"]';
   const url1 =
     '?runs=["runUuid1","runUuid2"]&plot_metric_keys=["metric_1"]&plot_layout={}&x_axis=wall&y_axis_scale=log&show_point=false';
   const url2 = '?runs=["runUuid1","runUuid2"]&plot_metric_keys=["metric_1","metric_2"]';
@@ -434,7 +434,7 @@ test('getLoggedModelsFromTags correctly parses run tag for logged models', () =>
       key: 'mlflow.log-model.history',
       value: JSON.stringify([
         {
-          run_id: 'run-uuid',
+          runId: 'run-uuid',
           artifact_path: 'somePath',
           utc_time_created: '2020-10-31',
           flavors: { keras: {}, python_function: {} },
@@ -455,19 +455,19 @@ test('getLoggedModelsFromTags should correctly dedup and sort logged models', ()
       key: 'mlflow.log-model.history',
       value: JSON.stringify([
         {
-          run_id: 'run-uuid',
+          runId: 'run-uuid',
           artifact_path: 'somePath',
           utc_time_created: '2020-10-29',
           flavors: { keras: {}, python_function: {} },
         },
         {
-          run_id: 'run-uuid',
+          runId: 'run-uuid',
           artifact_path: 'somePath',
           utc_time_created: '2020-10-30',
           flavors: { sklearn: {}, python_function: {} },
         },
         {
-          run_id: 'run-uuid',
+          runId: 'run-uuid',
           artifact_path: 'someOtherPath',
           utc_time_created: '2020-10-31',
           flavors: { python_function: {} },
@@ -498,7 +498,7 @@ test('mergeLoggedAndRegisteredModels should merge logged and registered model', 
       key: 'mlflow.log-model.history',
       value: JSON.stringify([
         {
-          run_id: 'run-uuid',
+          runId: 'run-uuid',
           artifact_path: 'somePath',
           utc_time_created: '2020-10-31',
           flavors: { keras: {}, python_function: {} },
@@ -511,8 +511,8 @@ test('mergeLoggedAndRegisteredModels should merge logged and registered model', 
       name: 'someModel',
       version: '3',
       source: 'nananaBatman/artifacts/somePath',
-      creation_timestamp: 123456,
-      run_id: 'run-uuid',
+      creationTimestamp: 123456,
+      runId: 'run-uuid',
     },
   ];
   const loggedModels = Utils.getLoggedModelsFromTags(tags);
@@ -535,13 +535,13 @@ test('mergeLoggedAndRegisteredModels should output 2 logged and 1 registered mod
       key: 'mlflow.log-model.history',
       value: JSON.stringify([
         {
-          run_id: 'run-uuid',
+          runId: 'run-uuid',
           artifact_path: 'somePath',
           utc_time_created: '2020-10-31',
           flavors: { keras: {}, python_function: {} },
         },
         {
-          run_id: 'run-uuid',
+          runId: 'run-uuid',
           artifact_path: 'someOtherPath',
           utc_time_created: '2020-10-31',
           flavors: { sklearn: {}, python_function: {} },
@@ -555,8 +555,8 @@ test('mergeLoggedAndRegisteredModels should output 2 logged and 1 registered mod
       name: 'someModel',
       version: '3',
       source: 'nananaBatman/artifacts/somePath',
-      run_id: 'run-uuid',
-      creation_timestamp: 123456,
+      runId: 'run-uuid',
+      creationTimestamp: 123456,
     },
   ];
   const loggedModels = Utils.getLoggedModelsFromTags(tags);
@@ -584,13 +584,13 @@ test('mergeLoggedAndRegisteredModels should output registered models in order', 
       key: 'mlflow.log-model.history',
       value: JSON.stringify([
         {
-          run_id: 'run-uuid',
+          runId: 'run-uuid',
           artifact_path: 'somePath',
           utc_time_created: '2020-10-30',
           flavors: { keras: {}, python_function: {} },
         },
         {
-          run_id: 'run-uuid',
+          runId: 'run-uuid',
           artifact_path: 'someOtherPath',
           utc_time_created: '2020-10-31',
           flavors: { sklearn: {}, python_function: {} },
@@ -607,15 +607,15 @@ test('mergeLoggedAndRegisteredModels should output registered models in order', 
       name: 'someModel',
       version: '3',
       source: 'nananaBatman/artifacts/somePath',
-      run_id: 'run-uuid',
-      creation_timestamp: 12345,
+      runId: 'run-uuid',
+      creationTimestamp: 12345,
     },
     {
       name: 'someNewerModel',
       version: '4',
       source: 'nananaBatman/artifacts/someOtherPath',
-      run_id: 'run-uuid',
-      creation_timestamp: 67890,
+      runId: 'run-uuid',
+      creationTimestamp: 67890,
     },
   ];
 
@@ -641,7 +641,7 @@ test('mergeLoggedAndRegisteredModels should output registered models in order', 
   // Change order
   modelVersions[1].name = 'someModel';
   modelVersions[1].version = '2';
-  modelVersions[1].creation_timestamp = 1000;
+  modelVersions[1].creationTimestamp = 1000;
   models = Utils.mergeLoggedAndRegisteredModels(loggedModels, modelVersions);
   expect(models[0].registeredModelVersion).toEqual('3');
 

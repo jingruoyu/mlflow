@@ -16,7 +16,7 @@ import ExperimentView from './ExperimentView';
 import { PermissionDeniedView } from './PermissionDeniedView';
 import { ViewType } from '../sdk/MlflowEnums';
 import { ErrorWrapper } from '../../common/utils/ActionUtils';
-import { MAX_RUNS_IN_SEARCH_MODEL_VERSIONS_FILTER } from '../../model-registry/constants';
+import { MAX_RUNS_IN_SEARCH_modelVersionS_FILTER } from '../../model-registry/constants';
 
 const BASE_PATH = '/experiments/17/s';
 const EXPERIMENT_ID = '17';
@@ -392,12 +392,12 @@ describe('fetchModelVersionsForRuns', () => {
 
     instance.fetchModelVersionsForRuns({
       value: {
-        runs: [{ info: { run_id: '1' } }, { info: { run_id: '2' } }, { info: { run_id: '3' } }],
+        runs: [{ info: { runId: '1' } }, { info: { runId: '2' } }, { info: { runId: '3' } }],
       },
     });
 
     expect(searchModelVersionsApi).toHaveBeenCalledWith(
-      { run_id: ['1', '2', '3'] },
+      { runId: ['1', '2', '3'] },
       instance.searchModelVersionsRequestId,
     );
   });
@@ -417,8 +417,8 @@ describe('fetchModelVersionsForRuns', () => {
   it('should chunk runs to searchModelVersions', () => {
     const wrapper = getExperimentPageMock();
     const instance = wrapper.instance();
-    const runs = [...Array(MAX_RUNS_IN_SEARCH_MODEL_VERSIONS_FILTER + 1).keys()].map((run_id) => ({
-      info: { run_id },
+    const runs = [...Array(MAX_RUNS_IN_SEARCH_modelVersionS_FILTER + 1).keys()].map((runId) => ({
+      info: { runId },
       data: {},
     }));
 

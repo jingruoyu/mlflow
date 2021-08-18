@@ -17,14 +17,14 @@ import { ErrorCodes } from '../../common/constants';
 import { PermissionDeniedView } from './PermissionDeniedView';
 import { Spinner } from '../../common/components/Spinner';
 import { getUUID } from '../../common/utils/ActionUtils';
-import { MAX_RUNS_IN_SEARCH_MODEL_VERSIONS_FILTER } from '../../model-registry/constants';
+import { MAX_RUNS_IN_SEARCH_modelVersionS_FILTER } from '../../model-registry/constants';
 import { getExperiment } from '../reducers/Reducers';
 import { Experiment } from '../sdk/MlflowMessages';
 
 export const LIFECYCLE_FILTER = { ACTIVE: 'Active', DELETED: 'Deleted' };
-export const MODEL_VERSION_FILTER = {
-  WITH_MODEL_VERSIONS: 'With Model Versions',
-  WTIHOUT_MODEL_VERSIONS: 'Without Model Versions',
+export const modelVersion_FILTER = {
+  WITH_modelVersionS: 'With Model Versions',
+  WTIHOUT_modelVersionS: 'Without Model Versions',
   ALL_RUNS: 'All Runs',
 };
 
@@ -80,7 +80,7 @@ export class ExperimentPage extends Component {
       // Lifecycle filter of runs to display
       lifecycleFilter: LIFECYCLE_FILTER.ACTIVE,
       // Filter of model versions to display
-      modelVersionFilter: MODEL_VERSION_FILTER.ALL_RUNS,
+      modelVersionFilter: modelVersion_FILTER.ALL_RUNS,
       ...PAGINATION_DEFAULT_STATE,
       persistedState: {
         paramKeyFilterString: urlState.params === undefined ? '' : urlState.params,
@@ -162,9 +162,9 @@ export class ExperimentPage extends Component {
     if (value) {
       const { runs } = value;
       if (runs && runs.length > 0) {
-        _.chunk(runs, MAX_RUNS_IN_SEARCH_MODEL_VERSIONS_FILTER).forEach((runsChunk) => {
+        _.chunk(runs, MAX_RUNS_IN_SEARCH_modelVersionS_FILTER).forEach((runsChunk) => {
           this.props.searchModelVersionsApi(
-            { run_id: runsChunk.map((run) => run.info.run_id) },
+            { runId: runsChunk.map((run) => run.info.runId) },
             this.searchModelVersionsRequestId,
           );
         });

@@ -79,15 +79,15 @@ export const ModelVersionStatusIcons = {
   ),
 };
 
-export const MODEL_VERSION_STATUS_POLL_INTERVAL = 10000;
+export const modelVersion_STATUS_POLL_INTERVAL = 10000;
 
-export const REGISTERED_MODELS_PER_PAGE = 10;
+export const registeredModel_PER_PAGE = 10;
 
-export const MAX_RUNS_IN_SEARCH_MODEL_VERSIONS_FILTER = 75; // request size has a limit of 4KB
+export const MAX_RUNS_IN_SEARCH_modelVersionS_FILTER = 75; // request size has a limit of 4KB
 
-export const REGISTERED_MODELS_SEARCH_NAME_FIELD = 'name';
+export const registeredModel_SEARCH_NAME_FIELD = 'name';
 
-export const REGISTERED_MODELS_SEARCH_TIMESTAMP_FIELD = 'timestamp';
+export const registeredModel_SEARCH_TIMESTAMP_FIELD = 'timestamp';
 
 export const MODEL_SCHEMA_TENSOR_TYPE = 'tensor';
 
@@ -96,7 +96,7 @@ export const AntdTableSortOrder = {
   DESC: 'descend',
 };
 
-export const MODEL_VERSION_DELETE_MENU_ITEM_DISABLED_TOOLTIP_TEXT = `You cannot delete a model
+export const modelVersion_DELETE_MENU_ITEM_DISABLED_TOOLTIP_TEXT = `You cannot delete a model
 version in an active stage. To delete this model version, transition it to the 'Archived' stage.`;
 
 export const REGISTERED_MODEL_DELETE_MENU_ITEM_DISABLED_TOOLTIP_TEXT = `You cannot delete a

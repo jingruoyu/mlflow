@@ -22,7 +22,7 @@ import {
   ModelVersionStatusIcons,
   DefaultModelVersionStatusMessages,
   ACTIVE_STAGES,
-  MODEL_VERSION_DELETE_MENU_ITEM_DISABLED_TOOLTIP_TEXT,
+  modelVersion_DELETE_MENU_ITEM_DISABLED_TOOLTIP_TEXT,
 } from '../constants';
 import Routers from '../../experiment-tracking/routes';
 import { CollapsibleSection } from '../../common/components/CollapsibleSection';
@@ -188,9 +188,9 @@ export class ModelVersionViewImpl extends React.Component {
   renderPageHeaderDropdown() {
     const menu = (
       <Menu>
-        {ACTIVE_STAGES.includes(this.props.modelVersion.current_stage) ? (
+        {ACTIVE_STAGES.includes(this.props.modelVersion.currentStage) ? (
           <Menu.Item disabled className='delete'>
-            <Tooltip placement='right' title={MODEL_VERSION_DELETE_MENU_ITEM_DISABLED_TOOLTIP_TEXT}>
+            <Tooltip placement='right' title={modelVersion_DELETE_MENU_ITEM_DISABLED_TOOLTIP_TEXT}>
               <FormattedMessage
                 defaultMessage='Delete'
                 description='Text for disabled deleted button due to inactive stage on model
@@ -226,18 +226,18 @@ export class ModelVersionViewImpl extends React.Component {
       >
         {modelVersion.status === ModelVersionStatus.READY ? (
           <ModelStageTransitionDropdown
-            currentStage={modelVersion.current_stage}
+            currentStage={modelVersion.currentStage}
             permissionLevel={modelVersion.permission_level}
             onSelect={handleStageTransitionDropdownSelect}
           />
         ) : (
-          StageTagComponents[modelVersion.current_stage]
+          StageTagComponents[modelVersion.currentStage]
         )}
       </Descriptions.Item>
     );
   }
 
-  renderRegisteredTimestampDescription(creation_timestamp) {
+  renderRegisteredTimestampDescription(creationTimestamp) {
     return (
       <Descriptions.Item
         label={this.props.intl.formatMessage({
@@ -245,7 +245,7 @@ export class ModelVersionViewImpl extends React.Component {
           description: 'Label name for registered timestamp metadata in model version page',
         })}
       >
-        {Utils.formatTimestamp(creation_timestamp)}
+        {Utils.formatTimestamp(creationTimestamp)}
       </Descriptions.Item>
     );
   }
@@ -263,7 +263,7 @@ export class ModelVersionViewImpl extends React.Component {
     );
   }
 
-  renderLastModifiedDescription(last_updated_timestamp) {
+  renderLastModifiedDescription(lastUpdatedTimestamp) {
     return (
       <Descriptions.Item
         label={this.props.intl.formatMessage({
@@ -271,7 +271,7 @@ export class ModelVersionViewImpl extends React.Component {
           description: 'Label name for last modified timestamp metadata in model version page',
         })}
       >
-        {Utils.formatTimestamp(last_updated_timestamp)}
+        {Utils.formatTimestamp(lastUpdatedTimestamp)}
       </Descriptions.Item>
     );
   }
@@ -292,10 +292,10 @@ export class ModelVersionViewImpl extends React.Component {
 
   getDescriptions(modelVersion) {
     const defaultOrder = [
-      this.renderRegisteredTimestampDescription(modelVersion.creation_timestamp),
+      this.renderRegisteredTimestampDescription(modelVersion.creationTimestamp),
       this.renderCreatorDescription(modelVersion.user_id),
       this.renderStageDropdown(modelVersion),
-      this.renderLastModifiedDescription(modelVersion.last_updated_timestamp),
+      this.renderLastModifiedDescription(modelVersion.lastUpdatedTimestamp),
       this.renderSourceRunDescription(),
     ];
     return defaultOrder;
@@ -344,9 +344,9 @@ export class ModelVersionViewImpl extends React.Component {
 
   resolveRunLink() {
     const { modelVersion, runInfo } = this.props;
-    if (modelVersion.run_link) {
+    if (modelVersion.runLink) {
       return (
-        <a target='_blank' href={modelVersion.run_link}>
+        <a target='_blank' href={modelVersion.runLink}>
           {this.resolveRunName()}
         </a>
       );
@@ -362,10 +362,10 @@ export class ModelVersionViewImpl extends React.Component {
 
   resolveRunName() {
     const { modelVersion, runInfo, runDisplayName } = this.props;
-    if (modelVersion.run_link) {
+    if (modelVersion.runLink) {
       // We use the first 37 chars to stay consistent with runDisplayName, which is typically:
       // Run: [ID]
-      return modelVersion.run_link.substr(0, 37) + '...';
+      return modelVersion.runLink.substr(0, 37) + '...';
     } else if (runInfo) {
       return runDisplayName || runInfo.getRunUuid();
     } else {

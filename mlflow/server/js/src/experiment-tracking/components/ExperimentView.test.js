@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { ExperimentViewWithIntl, mapStateToProps } from './ExperimentView';
 import Fixtures from '../utils/test-utils/Fixtures';
-import { LIFECYCLE_FILTER, MODEL_VERSION_FILTER } from './ExperimentPage';
+import { LIFECYCLE_FILTER, modelVersion_FILTER } from './ExperimentPage';
 import { ColumnTypes } from '../constants';
 import KeyFilter from '../utils/KeyFilter';
 import {
@@ -53,7 +53,7 @@ const getDefaultExperimentViewProps = () => {
     experimentTags: {},
     paramKeyFilter: new KeyFilter(''),
     metricKeyFilter: new KeyFilter(''),
-    modelVersionFilter: MODEL_VERSION_FILTER.ALL_RUNS,
+    modelVersionFilter: modelVersion_FILTER.ALL_RUNS,
     lifecycleFilter: LIFECYCLE_FILTER.ACTIVE,
     searchInput: '',
     searchRunsError: '',
@@ -262,7 +262,7 @@ describe('ExperimentView event handlers', () => {
     metricKeyFilterInput = '',
     searchInput = '',
     lifecycleFilterInput = LIFECYCLE_FILTER.ACTIVE,
-    modelVersionFilterInput = MODEL_VERSION_FILTER.ALL_RUNS,
+    modelVersionFilterInput = modelVersion_FILTER.ALL_RUNS,
     orderByKey = null,
     orderByAsc = false,
   } = {}) => [
@@ -293,7 +293,7 @@ describe('ExperimentView event handlers', () => {
   });
 
   test('handleModelVersionFilterInput calls onSearch with the right params', () => {
-    const newFilterInput = MODEL_VERSION_FILTER.WTIHOUT_MODEL_VERSIONS;
+    const newFilterInput = modelVersion_FILTER.WTIHOUT_modelVersionS;
     instance.handleModelVersionFilterInput({ key: newFilterInput });
 
     expect(onSearchSpy).toHaveBeenCalledTimes(1);
@@ -307,7 +307,7 @@ describe('ExperimentView event handlers', () => {
   test('onClear clears all parameters', () => {
     wrapper = getExperimentViewMock({
       lifecycleFilter: LIFECYCLE_FILTER.DELETED,
-      modelVersionFilter: MODEL_VERSION_FILTER.WITH_MODEL_VERSIONS,
+      modelVersionFilter: modelVersion_FILTER.WITH_modelVersionS,
       searchInput: 'previous-testing',
     });
     instance = wrapper.instance();

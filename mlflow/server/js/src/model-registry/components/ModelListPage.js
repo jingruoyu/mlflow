@@ -8,8 +8,8 @@ import Utils from '../../common/utils/Utils';
 import { appendTagsFilter, getModelNameFilter } from '../utils/SearchUtils';
 import {
   AntdTableSortOrder,
-  REGISTERED_MODELS_PER_PAGE,
-  REGISTERED_MODELS_SEARCH_NAME_FIELD,
+  registeredModel_PER_PAGE,
+  registeredModel_SEARCH_NAME_FIELD,
 } from '../constants';
 import { searchRegisteredModelsApi } from '../actions';
 import LocalStorageUtils from '../../common/utils/LocalStorageUtils';
@@ -18,10 +18,10 @@ export class ModelListPageImpl extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      orderByKey: REGISTERED_MODELS_SEARCH_NAME_FIELD,
+      orderByKey: registeredModel_SEARCH_NAME_FIELD,
       orderByAsc: true,
       currentPage: 1,
-      maxResultsSelection: REGISTERED_MODELS_PER_PAGE,
+      maxResultsSelection: registeredModel_PER_PAGE,
       pageTokens: {},
       loading: false,
     };
@@ -90,7 +90,7 @@ export class ModelListPageImpl extends React.Component {
     if (store && store.getItem('max_results')) {
       return parseInt(store.getItem('max_results'), 10);
     } else {
-      return REGISTERED_MODELS_PER_PAGE;
+      return registeredModel_PER_PAGE;
     }
   }
 
@@ -141,7 +141,7 @@ export class ModelListPageImpl extends React.Component {
     orderByKey ? `${orderByKey} ${orderByAsc ? 'ASC' : 'DESC'}` : '';
 
   isEmptyPageResponse = (value) => {
-    return !value || !value.registered_models || !value.next_page_token;
+    return !value || !value.registeredModel || !value.next_page_token;
   };
 
   getNextPageTokenFromResponse(response) {
@@ -189,11 +189,11 @@ export class ModelListPageImpl extends React.Component {
 
   handleClear = (callback, errorCallback) => {
     this.setState({
-      orderByKey: REGISTERED_MODELS_SEARCH_NAME_FIELD,
+      orderByKey: registeredModel_SEARCH_NAME_FIELD,
       orderByAsc: true,
     });
-    this.updateUrlWithSearchFilter('', '', REGISTERED_MODELS_SEARCH_NAME_FIELD, true, 1);
-    this.loadPage(1, '', '', REGISTERED_MODELS_SEARCH_NAME_FIELD, true, callback, errorCallback);
+    this.updateUrlWithSearchFilter('', '', registeredModel_SEARCH_NAME_FIELD, true, 1);
+    this.loadPage(1, '', '', registeredModel_SEARCH_NAME_FIELD, true, callback, errorCallback);
   };
 
   updateUrlWithSearchFilter = (nameSearchInput, tagSearchInput, orderByKey, orderByAsc, page) => {
@@ -204,7 +204,7 @@ export class ModelListPageImpl extends React.Component {
     if (tagSearchInput) {
       urlParams['tagSearchInput'] = tagSearchInput;
     }
-    if (orderByKey && orderByKey !== REGISTERED_MODELS_SEARCH_NAME_FIELD) {
+    if (orderByKey && orderByKey !== registeredModel_SEARCH_NAME_FIELD) {
       urlParams['orderByKey'] = orderByKey;
     }
     if (orderByAsc === false) {

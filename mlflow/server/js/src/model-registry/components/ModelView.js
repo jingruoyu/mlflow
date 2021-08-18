@@ -44,12 +44,12 @@ export class ModelViewImpl extends React.Component {
   static propTypes = {
     model: PropTypes.shape({
       name: PropTypes.string.isRequired,
-      creation_timestamp: PropTypes.number.isRequired,
-      last_updated_timestamp: PropTypes.number.isRequired,
+      creationTimestamp: PropTypes.number.isRequired,
+      lastUpdatedTimestamp: PropTypes.number.isRequired,
     }),
     modelVersions: PropTypes.arrayOf(
       PropTypes.shape({
-        current_stage: PropTypes.string.isRequired,
+        currentStage: PropTypes.string.isRequired,
       }),
     ),
     handleEditDescription: PropTypes.func.isRequired,
@@ -82,7 +82,7 @@ export class ModelViewImpl extends React.Component {
   getActiveVersionsCount() {
     const { modelVersions } = this.props;
     return modelVersions
-      ? modelVersions.filter((v) => ACTIVE_STAGES.includes(v.current_stage)).length
+      ? modelVersions.filter((v) => ACTIVE_STAGES.includes(v.currentStage)).length
       : 0;
   }
 
@@ -215,7 +215,7 @@ export class ModelViewImpl extends React.Component {
     selectedRows.forEach((row) => {
       newState.runsSelected = {
         ...newState.runsSelected,
-        [row.version]: row.run_id,
+        [row.version]: row.runId,
       };
     });
     this.setState(newState);
@@ -266,7 +266,7 @@ export class ModelViewImpl extends React.Component {
                 'Label name for the created time under details tab on the model view page',
             })}
           >
-            {Utils.formatTimestamp(model.creation_timestamp)}
+            {Utils.formatTimestamp(model.creationTimestamp)}
           </Descriptions.Item>
           <Descriptions.Item
             label={this.props.intl.formatMessage({
@@ -275,7 +275,7 @@ export class ModelViewImpl extends React.Component {
                 'Label name for the last modified time under details tab on the model view page',
             })}
           >
-            {Utils.formatTimestamp(model.last_updated_timestamp)}
+            {Utils.formatTimestamp(model.lastUpdatedTimestamp)}
           </Descriptions.Item>
           {model.user_id && (
             <Descriptions.Item

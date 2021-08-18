@@ -68,9 +68,9 @@ export class ModelVersionTableImpl extends React.Component {
           defaultMessage: 'Registered at',
           description: 'Column title text for created at timestamp in model version table',
         }),
-        dataIndex: 'creation_timestamp',
+        dataIndex: 'creationTimestamp',
         render: (creationTimestamp) => <span>{Utils.formatTimestamp(creationTimestamp)}</span>,
-        sorter: (a, b) => a.creation_timestamp - b.creation_timestamp,
+        sorter: (a, b) => a.creationTimestamp - b.creationTimestamp,
         defaultSortOrder: 'descend',
         sortDirections: ['descend'],
       },
@@ -86,7 +86,7 @@ export class ModelVersionTableImpl extends React.Component {
           defaultMessage: 'Stage',
           description: 'Column title text for model version stage in model version table',
         }),
-        dataIndex: 'current_stage',
+        dataIndex: 'currentStage',
         render: (currentStage) => {
           return StageTagComponents[currentStage];
         },
@@ -103,7 +103,7 @@ export class ModelVersionTableImpl extends React.Component {
     return columns;
   };
 
-  getRowKey = (record) => record.creation_timestamp;
+  getRowKey = (record) => record.creationTimestamp;
 
   emptyTablePlaceholder = () => {
     const learnMoreLinkUrl = ModelVersionTable.getLearnMoreLinkUrl();
@@ -129,7 +129,7 @@ export class ModelVersionTableImpl extends React.Component {
   render() {
     const { modelVersions, activeStageOnly } = this.props;
     const versions = activeStageOnly
-      ? modelVersions.filter((v) => ACTIVE_STAGES.includes(v.current_stage))
+      ? modelVersions.filter((v) => ACTIVE_STAGES.includes(v.currentStage))
       : modelVersions;
     return (
       <Table

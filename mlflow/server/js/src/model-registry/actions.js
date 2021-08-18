@@ -10,14 +10,14 @@ export const createRegisteredModelApi = (name, id = getUUID()) => ({
   meta: { id, name },
 });
 
-export const LIST_REGISTERED_MODELS = 'LIST_REGISTERED_MODELS';
+export const LIST_registeredModel = 'LIST_registeredModel';
 export const listRegisteredModelsApi = (id = getUUID()) => ({
-  type: LIST_REGISTERED_MODELS,
+  type: LIST_registeredModel,
   payload: wrapDeferred(Services.listRegisteredModels, {}),
   meta: { id },
 });
 
-export const SEARCH_REGISTERED_MODELS = 'SEARCH_REGISTERED_MODELS';
+export const SEARCH_registeredModel = 'SEARCH_registeredModel';
 export const searchRegisteredModelsApi = (
   filter,
   maxResults,
@@ -26,7 +26,7 @@ export const searchRegisteredModelsApi = (
   id = getUUID(),
 ) => {
   return {
-    type: SEARCH_REGISTERED_MODELS,
+    type: SEARCH_registeredModel,
     payload: wrapDeferred(Services.searchRegisteredModels, {
       filter,
       max_results: maxResults,
@@ -79,21 +79,21 @@ export const deleteRegisteredModelTagApi = (modelName, key, id = getUUID()) => (
   meta: { id, modelName, key },
 });
 
-export const CREATE_MODEL_VERSION = 'CREATE_MODEL_VERSION';
+export const CREATE_modelVersion = 'CREATE_modelVersion';
 export const createModelVersionApi = (name, source, runId, id = getUUID()) => ({
-  type: CREATE_MODEL_VERSION,
-  payload: wrapDeferred(Services.createModelVersion, { name, source, run_id: runId }),
+  type: CREATE_modelVersion,
+  payload: wrapDeferred(Services.createModelVersion, { name, source, runId: runId }),
   meta: { id, name, runId },
 });
 
-export const GET_MODEL_VERSION_ARTIFACT = 'GET_MODEL_VERSION_ARTIFACT';
+export const GET_modelVersion_ARTIFACT = 'GET_modelVersion_ARTIFACT';
 export const getModelVersionArtifactApi = (modelName, version, id = getUUID()) => {
   const baseUri = 'model-versions/get-artifact?path=MLmodel';
   const uriEncodedModelName = `name=${encodeURIComponent(modelName)}`;
   const uriEncodedModelVersion = `version=${encodeURIComponent(version)}`;
   const artifactLocation = `${baseUri}&${uriEncodedModelName}&${uriEncodedModelVersion}`;
   return {
-    type: GET_MODEL_VERSION_ARTIFACT,
+    type: GET_modelVersion_ARTIFACT,
     payload: getArtifactContent(artifactLocation),
     meta: { id, modelName, version },
   };
@@ -128,9 +128,9 @@ export const parseMlModelFile = (modelName, version, mlModelFile, id = getUUID()
   }
 };
 
-export const GET_MODEL_VERSION_ACTIVITIES = 'GET_MODEL_VERSION_ACTIVITIES';
+export const GET_modelVersion_ACTIVITIES = 'GET_modelVersion_ACTIVITIES';
 export const getModelVersionActivitiesApi = (modelName, version, id = getUUID()) => ({
-  type: GET_MODEL_VERSION_ACTIVITIES,
+  type: GET_modelVersion_ACTIVITIES,
   payload: wrapDeferred(Services.getModelVersionActivities, {
     name: modelName,
     version: version,
@@ -143,7 +143,7 @@ export const resolveFilterValue = (value, includeWildCard = false) => {
   return value.includes("'") ? `"${wrapper}${value}${wrapper}"` : `'${wrapper}${value}${wrapper}'`;
 };
 
-export const SEARCH_MODEL_VERSIONS = 'SEARCH_MODEL_VERSIONS';
+export const SEARCH_modelVersionS = 'SEARCH_modelVersionS';
 export const searchModelVersionsApi = (filterObj, id = getUUID()) => {
   const filter = Object.keys(filterObj)
     .map((key) => {
@@ -158,15 +158,15 @@ export const searchModelVersionsApi = (filterObj, id = getUUID()) => {
     .join('&');
 
   return {
-    type: SEARCH_MODEL_VERSIONS,
+    type: SEARCH_modelVersionS,
     payload: wrapDeferred(Services.searchModelVersions, { filter }),
     meta: { id },
   };
 };
 
-export const UPDATE_MODEL_VERSION = 'UPDATE_MODEL_VERSION';
+export const UPDATE_modelVersion = 'UPDATE_modelVersion';
 export const updateModelVersionApi = (modelName, version, description, id = getUUID()) => ({
-  type: UPDATE_MODEL_VERSION,
+  type: UPDATE_modelVersion,
   payload: wrapDeferred(Services.updateModelVersion, {
     name: modelName,
     version: version,
@@ -175,7 +175,7 @@ export const updateModelVersionApi = (modelName, version, description, id = getU
   meta: { id },
 });
 
-export const TRANSITION_MODEL_VERSION_STAGE = 'TRANSITION_MODEL_VERSION_STAGE';
+export const TRANSITION_modelVersion_STAGE = 'TRANSITION_modelVersion_STAGE';
 export const transitionModelVersionStageApi = (
   modelName,
   version,
@@ -183,7 +183,7 @@ export const transitionModelVersionStageApi = (
   archiveExistingVersions,
   id = getUUID(),
 ) => ({
-  type: TRANSITION_MODEL_VERSION_STAGE,
+  type: TRANSITION_modelVersion_STAGE,
   payload: wrapDeferred(Services.transitionModelVersionStage, {
     name: modelName,
     version,
@@ -193,9 +193,9 @@ export const transitionModelVersionStageApi = (
   meta: { id },
 });
 
-export const DELETE_MODEL_VERSION = 'DELETE_MODEL_VERSION';
+export const DELETE_modelVersion = 'DELETE_modelVersion';
 export const deleteModelVersionApi = (modelName, version, id = getUUID(), localUpdateOnly) => ({
-  type: DELETE_MODEL_VERSION,
+  type: DELETE_modelVersion,
   payload: localUpdateOnly
     ? Promise.resolve()
     : wrapDeferred(Services.deleteModelVersion, {
@@ -214,9 +214,9 @@ export const getRegisteredModelApi = (modelName, id = getUUID()) => ({
   meta: { id, modelName },
 });
 
-export const GET_MODEL_VERSION = 'GET_MODEL_VERSION';
+export const GET_modelVersion = 'GET_modelVersion';
 export const getModelVersionApi = (modelName, version, id = getUUID()) => ({
-  type: GET_MODEL_VERSION,
+  type: GET_modelVersion,
   payload: wrapDeferred(Services.getModelVersion, {
     name: modelName,
     version: version,
@@ -224,9 +224,9 @@ export const getModelVersionApi = (modelName, version, id = getUUID()) => ({
   meta: { id, modelName, version },
 });
 
-export const SET_MODEL_VERSION_TAG = 'SET_MODEL_VERSION_TAG';
+export const SET_modelVersion_TAG = 'SET_modelVersion_TAG';
 export const setModelVersionTagApi = (modelName, version, key, value, id = getUUID()) => ({
-  type: SET_MODEL_VERSION_TAG,
+  type: SET_modelVersion_TAG,
   payload: wrapDeferred(Services.setModelVersionTag, {
     name: modelName,
     version: version,
@@ -236,9 +236,9 @@ export const setModelVersionTagApi = (modelName, version, key, value, id = getUU
   meta: { id, modelName, version, key, value },
 });
 
-export const DELETE_MODEL_VERSION_TAG = 'DELETE_MODEL_VERSION_TAG';
+export const DELETE_modelVersion_TAG = 'DELETE_modelVersion_TAG';
 export const deleteModelVersionTagApi = (modelName, version, key, id = getUUID()) => ({
-  type: DELETE_MODEL_VERSION_TAG,
+  type: DELETE_modelVersion_TAG,
   payload: wrapDeferred(Services.deleteModelVersionTag, {
     name: modelName,
     version: version,
