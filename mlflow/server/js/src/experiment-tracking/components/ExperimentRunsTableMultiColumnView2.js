@@ -23,10 +23,10 @@ import { Spinner } from '../../common/components/Spinner';
 import { ExperimentRunsTableEmptyOverlay } from '../../common/components/ExperimentRunsTableEmptyOverlay';
 import LocalStorageUtils from '../../common/utils/LocalStorageUtils';
 import { AgGridPersistedState } from '../sdk/MlflowLocalStorageMessages';
-import { ColumnTypes } from '../constants';
 import { TrimmedText } from '../../common/components/TrimmedText';
 import { getModelVersionPageRoute } from '../../model-registry/routes';
 import { css } from 'emotion';
+import { COLUMN_TYPES, ATTRIBUTE_COLUMN_LABELS, ATTRIBUTE_COLUMN_SORT_KEY } from '../constants';
 
 const PARAM_PREFIX = '$$$param$$$';
 const METRIC_PREFIX = '$$$metric$$$';
@@ -66,7 +66,10 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
   };
 
   static defaultColDef = {
-    width: 100,
+    initialWidth: 100,
+    // eslint-disable-next-line max-len
+    // autoSizePadding property is set to 0 so that the size of the columns don't change for sort icon or anything and remains stable
+    autoSizePadding: 0,
     headerComponentParams: { menuIcon: 'fa-bars' },
     resizable: true,
     filter: true,
@@ -87,6 +90,23 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
     loadingOverlayComponent: Spinner,
     noRowsOverlayComponent: ExperimentRunsTableEmptyOverlay,
   };
+
+  constructor(props) {
+    super(props);
+    this.getColumnDefs = this.getColumnDefs.bind(this);
+    this.state = {
+      columnDefs: [],
+    };
+  }
+
+  componentDidMount() {
+    // In some cases, the API request to fetch run info resolves
+    // before this component is constructed and mounted. We need to get
+    // column defs here to handle that case, as well as the one already
+    // handled in componentDidUpdate for when the request resolves after the
+    // fact.
+    this.setColumnDefs();
+  }
 
   /**
    * Returns a { name: value } map from a list of parameters/metrics/tags list
@@ -133,77 +153,98 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
       onSortBy,
     } = this.props;
     const commonSortOrderProps = { orderByKey, orderByAsc, onSortBy };
+    const getStyle = (key) => (key === this.props.orderByKey ? { backgroundColor: '#e6f7ff' } : {});
+    const headerStyle = (key) => getStyle(key);
+    const cellStyle = (params) => getStyle(params.colDef.headerComponentParams.canonicalSortKey);
 
     return [
       ...[
         {
+          field: '',
           checkboxSelection: true,
           headerCheckboxSelection: true,
           pinned: 'left',
-          width: 50,
+          initialWidth: 50,
         },
         {
-          headerName: 'Start Time',
+          headerName: ATTRIBUTE_COLUMN_LABELS.DATE,
           field: 'startTime',
           pinned: 'left',
-          width: 150,
+          initialWidth: 150,
           cellRenderer: 'dateCellRenderer',
           sortable: true,
           headerComponentParams: {
             ...commonSortOrderProps,
-            canonicalSortKey: 'attributes.start_time',
+            canonicalSortKey: ATTRIBUTE_COLUMN_SORT_KEY.DATE,
+            computedStylesOnSortKey: headerStyle,
           },
+          cellStyle,
         },
         {
-          headerName: 'Run Name',
+          headerName: ATTRIBUTE_COLUMN_LABELS.DURATION,
+          field: 'duration',
+          pinned: 'left',
+          initialWidth: 80,
+          cellStyle,
+        },
+        {
+          headerName: ATTRIBUTE_COLUMN_LABELS.RUN_NAME,
           pinned: 'left',
           field: 'runName',
           sortable: true,
           headerComponentParams: {
             ...commonSortOrderProps,
-            canonicalSortKey: 'tags.`mlflow.runName`',
+            canonicalSortKey: ATTRIBUTE_COLUMN_SORT_KEY.RUN_NAME,
+            computedStylesOnSortKey: headerStyle,
           },
+          cellStyle,
         },
         {
-          headerName: 'User',
+          headerName: ATTRIBUTE_COLUMN_LABELS.USER,
           field: 'user',
           sortable: true,
           headerComponentParams: {
             ...commonSortOrderProps,
-            canonicalSortKey: 'tags.`mlflow.user`',
+            canonicalSortKey: ATTRIBUTE_COLUMN_SORT_KEY.USER,
+            computedStylesOnSortKey: headerStyle,
           },
+          cellStyle,
         },
         {
-          headerName: 'Source',
+          headerName: ATTRIBUTE_COLUMN_LABELS.SOURCE,
           field: 'source',
           cellRenderer: 'sourceCellRenderer',
           sortable: true,
           headerComponentParams: {
             ...commonSortOrderProps,
-            canonicalSortKey: 'tags.`mlflow.source.name`',
+            canonicalSortKey: ATTRIBUTE_COLUMN_SORT_KEY.SOURCE,
+            computedStylesOnSortKey: headerStyle,
           },
+          cellStyle,
         },
         {
-          headerName: 'Version',
+          headerName: ATTRIBUTE_COLUMN_LABELS.VERSION,
           field: 'version',
           cellRenderer: 'versionCellRenderer',
           sortable: true,
           headerComponentParams: {
             ...commonSortOrderProps,
-            canonicalSortKey: 'tags.`mlflow.source.git.commit`',
+            canonicalSortKey: ATTRIBUTE_COLUMN_SORT_KEY.VERSION,
+            computedStylesOnSortKey: headerStyle,
           },
+          cellStyle,
         },
         {
-          headerName: 'Models',
+          headerName: ATTRIBUTE_COLUMN_LABELS.MODELS,
           field: 'models',
           cellRenderer: 'modelsCellRenderer',
-          width: 200,
+          initialWidth: 200,
         },
-      ].filter((c) => !categorizedUncheckedKeys[ColumnTypes.ATTRIBUTES].includes(c.headerName)),
+      ].filter((c) => !categorizedUncheckedKeys[COLUMN_TYPES.ATTRIBUTES].includes(c.headerName)),
       {
         headerName: 'Metrics',
         children: metricKeyList.map((metricKey, i) => {
-          const columnKey = ExperimentViewUtil.makeCanonicalKey(ColumnTypes.METRICS, metricKey);
+          const columnKey = ExperimentViewUtil.makeCanonicalKey(COLUMN_TYPES.METRICS, metricKey);
           return {
             headerName: metricKey,
             headerTooltip: metricKey,
@@ -217,14 +258,16 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
             headerComponentParams: {
               ...commonSortOrderProps,
               canonicalSortKey: columnKey,
+              computedStylesOnSortKey: headerStyle,
             },
+            cellStyle,
           };
         }),
       },
       {
         headerName: 'Parameters',
         children: paramKeyList.map((paramKey, i) => {
-          const columnKey = ExperimentViewUtil.makeCanonicalKey(ColumnTypes.PARAMS, paramKey);
+          const columnKey = ExperimentViewUtil.makeCanonicalKey(COLUMN_TYPES.PARAMS, paramKey);
           return {
             headerName: paramKey,
             headerTooltip: paramKey,
@@ -238,7 +281,9 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
             headerComponentParams: {
               ...commonSortOrderProps,
               canonicalSortKey: columnKey,
+              computedStylesOnSortKey: headerStyle,
             },
+            cellStyle,
           };
         }),
       },
@@ -293,12 +338,17 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
       const user = Utils.getUser(runInfo, tags);
       const queryParams = window.location && window.location.search ? window.location.search : '';
       const startTime = runInfo.start_time;
+      const duration = Utils.getDuration(runInfo.start_time, runInfo.end_time);
       const runName = Utils.getRunName(tags) || '-';
-      const visibleTags = Utils.getVisibleTagValues(tags).map(([key, value]) => ({ key, value }));
+      const visibleTags = Utils.getVisibleTagValues(tags).map(([key, value]) => ({
+        key,
+        value,
+      }));
 
       return {
         runInfo,
         startTime,
+        duration,
         user,
         runName,
         tags,
@@ -356,12 +406,6 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
     this.gridApi = params.api;
     this.columnApi = params.columnApi;
     this.applyRowSelectionFromProps();
-    this.handleColumnSizeRefit();
-    this.fitColumnsOnWindowResize = _.debounce(() => {
-      this.gridApi.sizeColumnsToFit();
-    }, 100);
-
-    window.addEventListener('resize', this.fitColumnsOnWindowResize);
   };
 
   // There is no way in ag-grid to declaratively specify row selections. Thus, we have to use grid
@@ -388,17 +432,6 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
         node.setSelected(true);
       }
     });
-  }
-
-  handleColumnSizeRefit() {
-    if (!this.gridApi || !this.columnApi) return;
-    // Only re-fit columns into current viewport when there is no open column group. We are doing
-    // this because opened group can have arbitrary large number of child columns which will end
-    // up creating a lot of columns with extremely small width.
-    const columnGroupStates = this.columnApi.getColumnGroupState();
-    if (columnGroupStates.every((group) => !group.open)) {
-      this.gridApi.sizeColumnsToFit();
-    }
   }
 
   handleLoadingOverlay() {
@@ -429,20 +462,34 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
     this.applyRowSelectionFromProps();
-    this.handleColumnSizeRefit();
     this.handleLoadingOverlay();
     this.restoreGridState();
+    // The following block checks if any columnDefs parameters have changed to
+    // update the columnDefs to prevent resizing and other column property issues.
+    if (
+      prevProps.metricKeyList.length !== this.props.metricKeyList.length ||
+      prevProps.paramKeyList.length !== this.props.paramKeyList.length ||
+      prevProps.visibleTagKeyList.length !== this.props.visibleTagKeyList.length ||
+      prevProps.categorizedUncheckedKeys[COLUMN_TYPES.ATTRIBUTES].length !==
+        this.props.categorizedUncheckedKeys[COLUMN_TYPES.ATTRIBUTES].length ||
+      prevProps.orderByKey !== this.props.orderByKey ||
+      prevProps.orderByAsc !== this.props.orderByAsc ||
+      prevProps.onSortBy !== this.props.onSortBy
+    ) {
+      this.setColumnDefs();
+    }
   }
 
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.fitColumnsOnWindowResize);
-  }
+  setColumnDefs = () => {
+    this.setState(() => ({
+      columnDefs: this.getColumnDefs(),
+    }));
+  };
 
   render() {
     const { handleLoadMoreRuns, loadingMore, numRunsFromLatestSearch, nestChildren } = this.props;
-    const columnDefs = this.getColumnDefs();
     const {
       defaultColDef,
       frameworkComponents,
@@ -452,13 +499,18 @@ export class ExperimentRunsTableMultiColumnView2 extends React.Component {
       <div className='ag-theme-balham multi-column-view' data-test-id='detailed-runs-table-view'>
         <AgGridReact
           defaultColDef={defaultColDef}
-          columnDefs={columnDefs}
+          columnDefs={this.state.columnDefs}
           rowData={this.getRowData()}
           modules={[Grid, ClientSideRowModelModule]}
           rowSelection='multiple'
           onGridReady={this.handleGridReady}
           onSelectionChanged={this.handleSelectionChange}
           onColumnGroupOpened={this.persistGridState}
+          // TODO: Remove `applyColumnDefOrder` if we upgrade AG-Grid to >= 26.0.0 where the order
+          // of the columns in the grid will always match the order of the column definitions.
+          // AG-5392 in https://www.ag-grid.com/ag-grid-changelog/?fixVersion=26.0.0 provides
+          // more details.
+          applyColumnDefOrder
           suppressRowClickSelection
           suppressScrollOnNewData // retain scroll position after nested run toggling operations
           suppressFieldDotNotation

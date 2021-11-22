@@ -9,7 +9,6 @@ import { getExperimentApi, searchRunsApi, loadMoreRunsApi, searchRunsPayload } f
 import { searchModelVersionsApi } from '../../model-registry/actions';
 import ExperimentView from './ExperimentView';
 import RequestStateWrapper from '../../common/components/RequestStateWrapper';
-import KeyFilter from '../utils/KeyFilter';
 import { ViewType } from '../sdk/MlflowEnums';
 import { ExperimentPagePersistedState } from '../sdk/MlflowLocalStorageMessages';
 import Utils from '../../common/utils/Utils';
@@ -20,22 +19,18 @@ import { getUUID } from '../../common/utils/ActionUtils';
 import { MAX_RUNS_IN_SEARCH_modelVersionS_FILTER } from '../../model-registry/constants';
 import { getExperiment } from '../reducers/Reducers';
 import { Experiment } from '../sdk/MlflowMessages';
-
-export const LIFECYCLE_FILTER = { ACTIVE: 'Active', DELETED: 'Deleted' };
-export const modelVersion_FILTER = {
-  WITH_modelVersionS: 'With Model Versions',
-  WTIHOUT_modelVersionS: 'Without Model Versions',
-  ALL_RUNS: 'All Runs',
-};
-
-export const PAGINATION_DEFAULT_STATE = {
-  nextPageToken: null,
-  numRunsFromLatestSearch: null, // number of runs returned from the most recent search request
-  loadingMore: false,
-};
-
-export const MAX_DETECT_NEW_RUNS_RESULTS = 26; // so the refresh button badge can be 25+
-export const DETECT_NEW_RUNS_INTERVAL = 15000;
+import { injectIntl } from 'react-intl';
+import {
+  LIFECYCLE_FILTER,
+  MODEL_VERSION_FILTER,
+  PAGINATION_DEFAULT_STATE,
+  MAX_DETECT_NEW_RUNS_RESULTS,
+  DETECT_NEW_RUNS_INTERVAL,
+  DEFAULT_ORDER_BY_KEY,
+  DEFAULT_ORDER_BY_ASC,
+  DEFAULT_START_TIME,
+  ATTRIBUTE_COLUMN_SORT_KEY,
+} from '../constants';
 
 export const isNewRun = (lastRunsRefreshTime, run) => {
   if (run && run.info) {
@@ -58,6 +53,7 @@ export class ExperimentPage extends Component {
     history: PropTypes.object.isRequired,
     location: PropTypes.object,
     searchForNewRuns: PropTypes.func,
+    intl: PropTypes.shape({ formatMessage: PropTypes.func.isRequired }).isRequired,
   };
 
   static defaultProps = {
@@ -82,12 +78,14 @@ export class ExperimentPage extends Component {
       // Filter of model versions to display
       modelVersionFilter: modelVersion_FILTER.ALL_RUNS,
       ...PAGINATION_DEFAULT_STATE,
+      getExperimentRequestId: null,
+      searchRunsRequestId: null,
       persistedState: {
-        paramKeyFilterString: urlState.params === undefined ? '' : urlState.params,
-        metricKeyFilterString: urlState.metrics === undefined ? '' : urlState.metrics,
         searchInput: urlState.search === undefined ? '' : urlState.search,
-        orderByKey: urlState.orderByKey === undefined ? null : urlState.orderByKey,
-        orderByAsc: urlState.orderByAsc === undefined ? true : urlState.orderByAsc === 'true',
+        orderByKey: urlState.orderByKey === undefined ? DEFAULT_ORDER_BY_KEY : urlState.orderByKey,
+        orderByAsc:
+          urlState.orderByAsc === undefined ? DEFAULT_ORDER_BY_ASC : urlState.orderByAsc === 'true',
+        startTime: urlState.startTime === undefined ? DEFAULT_START_TIME : urlState.startTime,
       },
     };
   }
@@ -107,9 +105,13 @@ export class ExperimentPage extends Component {
         persistedState:
           state.lastExperimentId === undefined
             ? state.persistedState
-            : new ExperimentPagePersistedState().toJSON(),
+            : new ExperimentPagePersistedState({ orderByKey: DEFAULT_ORDER_BY_KEY }).toJSON(),
         lastExperimentId: props.experimentId,
         lifecycleFilter: LIFECYCLE_FILTER.ACTIVE,
+        nextPageToken: null,
+        getExperimentRequestId: getUUID(),
+        searchRunsRequestId: getUUID(),
+        ...PAGINATION_DEFAULT_STATE,
       };
     }
     return null;
@@ -120,17 +122,17 @@ export class ExperimentPage extends Component {
     this.detectNewRunsTimer = null;
   }
 
-  getExperimentRequestId = getUUID();
-  searchRunsRequestId = getUUID();
   searchModelVersionsRequestId = getUUID();
   loadMoreRunsRequestId = getUUID();
 
   loadData() {
-    this.props.getExperimentApi(this.props.experimentId, this.getExperimentRequestId).catch((e) => {
-      console.error(e);
-    });
+    this.props
+      .getExperimentApi(this.props.experimentId, this.state.getExperimentRequestId)
+      .catch((e) => {
+        console.error(e);
+      });
 
-    this.handleGettingRuns(this.props.searchRunsApi, this.searchRunsRequestId);
+    this.handleGettingRuns(this.props.searchRunsApi, this.state.searchRunsRequestId);
   }
 
   maybeReloadData(prevProps) {
@@ -174,14 +176,44 @@ export class ExperimentPage extends Component {
     return response;
   };
 
+  static StartTimeColumnOffset = {
+    ALL: null,
+    LAST_HOUR: 1 * 60 * 60 * 1000,
+    LAST_24_HOURS: 24 * 60 * 60 * 1000,
+    LAST_7_DAYS: 7 * 24 * 60 * 60 * 1000,
+    LAST_30_DAYS: 30 * 24 * 60 * 60 * 1000,
+    LAST_YEAR: 12 * 30 * 24 * 60 * 60 * 1000,
+  };
+
+  getStartTimeExpr() {
+    const startTimeColumnOffset = ExperimentPage.StartTimeColumnOffset;
+    const { startTime } = this.state.persistedState;
+    const offset = startTimeColumnOffset[startTime];
+    if (!startTime || !offset || startTime === 'ALL') {
+      return null;
+    }
+    const startTimeOffset = new Date() - offset;
+
+    return `attributes.start_time >= ${startTimeOffset}`;
+  }
+
   handleGettingRuns = (getRunsAction, requestId) => {
     const { persistedState, lifecycleFilter, nextPageToken } = this.state;
     const { searchInput } = persistedState;
     const viewType = lifecycleFilterToRunViewType(lifecycleFilter);
     const orderBy = this.getOrderByExpr();
+    const startTime = this.getStartTimeExpr();
+    let filter = searchInput;
+    if (startTime) {
+      if (filter.length > 0) {
+        filter = `${filter} and ${startTime}`;
+      } else {
+        filter = startTime;
+      }
+    }
     const shouldFetchParents = this.shouldNestChildrenAndFetchParents();
     return getRunsAction({
-      filter: searchInput,
+      filter,
       runViewType: viewType,
       experimentIds: [this.props.experimentId],
       orderBy,
@@ -206,28 +238,27 @@ export class ExperimentPage extends Component {
   /*
     If this function returns true, the ExperimentView should nest children underneath their parents
     and fetch all root level parents of visible runs. If this function returns false, the views will
-    not nest children or fetch any additional parents.
+    not nest children or fetch any additional parents. Will always return true if the orderByKey is
+    'attributes.start_time'
   */
   shouldNestChildrenAndFetchParents() {
     const { orderByKey, searchInput } = this.state.persistedState;
-    return !orderByKey && !searchInput;
+    return (!orderByKey && !searchInput) || orderByKey === ATTRIBUTE_COLUMN_SORT_KEY.DATE;
   }
 
   onSearch = (
-    paramKeyFilterString,
-    metricKeyFilterString,
     searchInput,
     lifecycleFilterInput,
     orderByKey,
     orderByAsc,
     modelVersionFilterInput,
+    startTime,
   ) => {
     this.updateUrlWithSearchFilter({
-      paramKeyFilterString,
-      metricKeyFilterString,
       searchInput,
       orderByKey,
       orderByAsc,
+      startTime,
     });
 
     this.setState(
@@ -235,18 +266,17 @@ export class ExperimentPage extends Component {
         lastRunsRefreshTime: Date.now(),
         numberOfNewRuns: 0,
         persistedState: new ExperimentPagePersistedState({
-          paramKeyFilterString,
-          metricKeyFilterString,
           searchInput,
           orderByKey,
           orderByAsc,
+          startTime,
         }).toJSON(),
         lifecycleFilter: lifecycleFilterInput,
         modelVersionFilter: modelVersionFilterInput,
         nextPageToken: null,
       },
       () => {
-        this.handleGettingRuns(this.props.searchRunsApi, this.searchRunsRequestId);
+        this.handleGettingRuns(this.props.searchRunsApi, this.state.searchRunsRequestId);
         if (!this.detectNewRunsTimer) {
           this.detectNewRunsTimer = setInterval(
             () => this.detectNewRuns(),
@@ -299,22 +329,13 @@ export class ExperimentPage extends Component {
     return orderBy;
   }
 
-  updateUrlWithSearchFilter({
-    paramKeyFilterString,
-    metricKeyFilterString,
-    searchInput,
-    orderByKey,
-    orderByAsc,
-  }) {
+  updateUrlWithSearchFilter({ searchInput, orderByKey, orderByAsc, startTime }) {
     const state = {};
-    if (paramKeyFilterString) {
-      state['params'] = paramKeyFilterString;
-    }
-    if (metricKeyFilterString) {
-      state['metrics'] = metricKeyFilterString;
-    }
     if (searchInput) {
       state['search'] = searchInput;
+    }
+    if (startTime) {
+      state['startTime'] = startTime;
     }
     if (orderByKey) {
       state['orderByKey'] = orderByKey;
@@ -333,10 +354,13 @@ export class ExperimentPage extends Component {
 
   renderExperimentView = (isLoading, shouldRenderError, requests) => {
     let searchRunsError;
-    const getExperimentRequest = Utils.getRequestWithId(requests, this.getExperimentRequestId);
+    const getExperimentRequest = Utils.getRequestWithId(
+      requests,
+      this.state.getExperimentRequestId,
+    );
 
     if (shouldRenderError) {
-      const searchRunsRequest = Utils.getRequestWithId(requests, this.searchRunsRequestId);
+      const searchRunsRequest = Utils.getRequestWithId(requests, this.state.searchRunsRequestId);
       if (
         getExperimentRequest.error &&
         getExperimentRequest.error.getErrorCode() === ErrorCodes.PERMISSION_DENIED
@@ -352,20 +376,12 @@ export class ExperimentPage extends Component {
       return <Spinner />;
     }
 
-    const {
-      paramKeyFilterString,
-      metricKeyFilterString,
-      searchInput,
-      orderByKey,
-      orderByAsc,
-    } = this.state.persistedState;
+    const { searchInput, orderByKey, orderByAsc, startTime } = this.state.persistedState;
 
     const experimentViewProps = {
-      paramKeyFilter: new KeyFilter(paramKeyFilterString),
-      metricKeyFilter: new KeyFilter(metricKeyFilterString),
       experimentId: this.props.experimentId,
       experiment: this.props.experiment,
-      searchRunsRequestId: this.searchRunsRequestId,
+      searchRunsRequestId: this.state.searchRunsRequestId,
       modelVersionFilter: this.state.modelVersionFilter,
       lifecycleFilter: this.state.lifecycleFilter,
       onSearch: this.onSearch,
@@ -374,6 +390,7 @@ export class ExperimentPage extends Component {
       isLoading: isLoading && !searchRunsError,
       orderByKey: orderByKey,
       orderByAsc: orderByAsc,
+      startTime: startTime,
       nextPageToken: this.state.nextPageToken,
       numRunsFromLatestSearch: this.state.numRunsFromLatestSearch,
       handleLoadMoreRuns: this.handleLoadMoreRuns,
@@ -396,7 +413,7 @@ export class ExperimentPage extends Component {
   }
 
   getRequestIds() {
-    return [this.getExperimentRequestId, this.searchRunsRequestId];
+    return [this.state.getExperimentRequestId, this.state.searchRunsRequestId];
   }
 }
 
@@ -420,4 +437,4 @@ export const lifecycleFilterToRunViewType = (lifecycleFilter) => {
   }
 };
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(ExperimentPage));
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(injectIntl(ExperimentPage)));

@@ -18,7 +18,6 @@ import mlflow.pyfunc as pyfunc
 import mlflow.pytorch
 import mlflow.pyfunc.scoring_server as pyfunc_scoring_server
 from mlflow.pytorch import get_default_conda_env
-from mlflow import tracking
 from mlflow.exceptions import MlflowException
 from mlflow.models import Model, infer_signature
 from mlflow.models.utils import _read_example
@@ -215,29 +214,18 @@ def test_signature_and_examples_are_saved_correctly(sequential_model, data):
 @pytest.mark.large
 @pytest.mark.parametrize("scripted_model", [True, False])
 def test_log_model(sequential_model, data, sequential_predicted):
-    old_uri = tracking.get_tracking_uri()
-    # should_start_run tests whether or not calling log_model() automatically starts a run.
-    for should_start_run in [False, True]:
-        with TempDir(chdr=True, remove_on_exit=True) as tmp:
-            try:
-                tracking.set_tracking_uri(tmp.path("test"))
-                if should_start_run:
-                    mlflow.start_run()
+    try:
+        artifact_path = "pytorch"
+        mlflow.pytorch.log_model(sequential_model, artifact_path=artifact_path)
+        model_uri = "runs:/{run_id}/{artifact_path}".format(
+            run_id=mlflow.active_run().info.run_id, artifact_path=artifact_path
+        )
 
-                artifact_path = "pytorch"
-                mlflow.pytorch.log_model(sequential_model, artifact_path=artifact_path)
-                model_uri = "runs:/{run_id}/{artifact_path}".format(
-                    run_id=mlflow.active_run().info.run_id, artifact_path=artifact_path
-                )
-
-                # Load model
-                sequential_model_loaded = mlflow.pytorch.load_model(model_uri=model_uri)
-
-                test_predictions = _predict(sequential_model_loaded, data)
-                np.testing.assert_array_equal(test_predictions, sequential_predicted)
-            finally:
-                mlflow.end_run()
-                tracking.set_tracking_uri(old_uri)
+        sequential_model_loaded = mlflow.pytorch.load_model(model_uri=model_uri)
+        test_predictions = _predict(sequential_model_loaded, data)
+        np.testing.assert_array_equal(test_predictions, sequential_predicted)
+    finally:
+        mlflow.end_run()
 
 
 def test_log_model_calls_register_model(module_scoped_subclassed_model):
@@ -406,21 +394,23 @@ def test_save_model_with_pip_requirements(sequential_model, tmpdir):
     req_file = tmpdir.join("requirements.txt")
     req_file.write("a")
     mlflow.pytorch.save_model(sequential_model, tmpdir1.strpath, pip_requirements=req_file.strpath)
-    _assert_pip_requirements(tmpdir1.strpath, ["mlflow", "a"])
+    _assert_pip_requirements(tmpdir1.strpath, ["mlflow", "a"], strict=True)
 
     # List of requirements
     tmpdir2 = tmpdir.join("2")
     mlflow.pytorch.save_model(
         sequential_model, tmpdir2.strpath, pip_requirements=[f"-r {req_file.strpath}", "b"]
     )
-    _assert_pip_requirements(tmpdir2.strpath, ["mlflow", "a", "b"])
+    _assert_pip_requirements(tmpdir2.strpath, ["mlflow", "a", "b"], strict=True)
 
     # Constraints file
     tmpdir3 = tmpdir.join("3")
     mlflow.pytorch.save_model(
         sequential_model, tmpdir3.strpath, pip_requirements=[f"-c {req_file.strpath}", "b"]
     )
-    _assert_pip_requirements(tmpdir3.strpath, ["mlflow", "b", "-c constraints.txt"], ["a"])
+    _assert_pip_requirements(
+        tmpdir3.strpath, ["mlflow", "b", "-c constraints.txt"], ["a"], strict=True
+    )
 
 
 @pytest.mark.large
@@ -581,7 +571,9 @@ def test_pyfunc_model_serving_with_module_scoped_subclassed_model_and_default_co
     module_scoped_subclassed_model, model_path, data
 ):
     mlflow.pytorch.save_model(
-        path=model_path, pytorch_model=module_scoped_subclassed_model, code_paths=[__file__],
+        path=model_path,
+        pytorch_model=module_scoped_subclassed_model,
+        code_paths=[__file__],
     )
 
     scoring_response = pyfunc_serve_and_score_model(
@@ -600,7 +592,7 @@ def test_pyfunc_model_serving_with_module_scoped_subclassed_model_and_default_co
     )
 
 
-def test_save_model_with_wrong_codepaths_fails_corrrectly(
+def test_save_model_with_wrong_codepaths_fails_correctly(
     module_scoped_subclassed_model, model_path, data
 ):
     # pylint: disable=unused-argument
@@ -608,9 +600,7 @@ def test_save_model_with_wrong_codepaths_fails_corrrectly(
         mlflow.pytorch.save_model(
             path=model_path, pytorch_model=module_scoped_subclassed_model, code_paths="some string"
         )
-    assert "TypeError: Argument code_paths should be a list, not {}".format(type("")) in str(
-        exc_info
-    )
+    assert "Argument code_paths should be a list, not {}".format(type("")) in str(exc_info.value)
     assert not os.path.exists(model_path)
 
 
@@ -648,7 +638,9 @@ def test_load_model_succeeds_with_dependencies_specified_via_code_paths(
     # `tests` module is not available when the model is deployed for local scoring, we include
     # the test suite file as a code dependency
     mlflow.pytorch.save_model(
-        path=model_path, pytorch_model=module_scoped_subclassed_model, code_paths=[__file__],
+        path=model_path,
+        pytorch_model=module_scoped_subclassed_model,
+        code_paths=[__file__],
     )
 
     # Define a custom pyfunc model that loads a PyTorch model artifact using
@@ -1028,7 +1020,9 @@ def test_save_model_emits_deprecation_warning_for_requirements_file(tmpdir):
     reqs_file.write("torch")
     with pytest.warns(FutureWarning, match="`requirements_file` has been deprecated"):
         mlflow.pytorch.save_model(
-            get_sequential_model(), tmpdir.join("model"), requirements_file=reqs_file.strpath,
+            get_sequential_model(),
+            tmpdir.join("model"),
+            requirements_file=reqs_file.strpath,
         )
 
 
@@ -1149,7 +1143,9 @@ def test_save_state_dict(sequential_model, model_path, data):
     model = get_sequential_model()
     model.load_state_dict(loaded_state_dict)
     np.testing.assert_array_almost_equal(
-        _predict(model, data), _predict(sequential_model, data), decimal=4,
+        _predict(model, data),
+        _predict(sequential_model, data),
+        decimal=4,
     )
 
 
@@ -1193,5 +1189,7 @@ def test_log_state_dict(sequential_model, data):
     model = get_sequential_model()
     model.load_state_dict(loaded_state_dict)
     np.testing.assert_array_almost_equal(
-        _predict(model, data), _predict(sequential_model, data), decimal=4,
+        _predict(model, data),
+        _predict(sequential_model, data),
+        decimal=4,
     )

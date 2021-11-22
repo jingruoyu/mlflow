@@ -14,8 +14,10 @@ class AzureBlobArtifactRepository(ArtifactRepository):
 
     This repository is used with URIs of the form
     ``wasbs://<container-name>@<ystorage-account-name>.blob.core.windows.net/<path>``,
-    following the same URI scheme as Hadoop on Azure blob storage. It requires that your Azure
-    storage access key be available in the environment variable ``AZURE_STORAGE_ACCESS_KEY``.
+    following the same URI scheme as Hadoop on Azure blob storage. It requires either that:
+    - Azure storage connection string is in the env var ``AZURE_STORAGE_CONNECTION_STRING``
+    - Azure storage access key is in the env var ``AZURE_STORAGE_ACCESS_KEY``
+    - DefaultAzureCredential is configured
     """
 
     def __init__(self, artifact_uri, client=None):
@@ -39,9 +41,17 @@ class AzureBlobArtifactRepository(ArtifactRepository):
                 account_url=account_url, credential=os.environ.get("AZURE_STORAGE_ACCESS_KEY")
             )
         else:
-            raise Exception(
-                "You need to set one of AZURE_STORAGE_CONNECTION_STRING or "
-                "AZURE_STORAGE_ACCESS_KEY to access Azure storage."
+            try:
+                from azure.identity import DefaultAzureCredential
+            except ImportError as exc:
+                raise ImportError(
+                    "Using DefaultAzureCredential requires the azure-identity package. "
+                    "Please install it via: pip install azure-identity"
+                ) from exc
+
+            account_url = "https://{account}.blob.core.windows.net".format(account=account)
+            self.client = BlobServiceClient(
+                account_url=account_url, credential=DefaultAzureCredential()
             )
 
     @staticmethod
@@ -69,7 +79,7 @@ class AzureBlobArtifactRepository(ArtifactRepository):
             dest_path = posixpath.join(dest_path, artifact_path)
         dest_path = posixpath.join(dest_path, os.path.basename(local_file))
         with open(local_file, "rb") as file:
-            container_client.upload_blob(dest_path, file)
+            container_client.upload_blob(dest_path, file, overwrite=True)
 
     def log_artifacts(self, local_dir, artifact_path=None):
         (container, _, dest_path) = self.parse_wasbs_uri(self.artifact_uri)
@@ -86,7 +96,7 @@ class AzureBlobArtifactRepository(ArtifactRepository):
                 remote_file_path = posixpath.join(upload_path, f)
                 local_file_path = os.path.join(root, f)
                 with open(local_file_path, "rb") as file:
-                    container_client.upload_blob(remote_file_path, file)
+                    container_client.upload_blob(remote_file_path, file, overwrite=True)
 
     def list_artifacts(self, path=None):
         # Newer versions of `azure-storage-blob` (>= 12.4.0) provide a public

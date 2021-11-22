@@ -49,6 +49,16 @@ def xgb_model():
     return ModelWithData(model=model, inference_dataframe=X, inference_dmatrix=dtrain)
 
 
+@pytest.fixture(scope="session")
+def xgb_sklearn_model():
+    wine = datasets.load_wine()
+    X = pd.DataFrame(wine.data, columns=wine.feature_names)
+    y = pd.Series(wine.target)
+    regressor = xgb.XGBRegressor(n_estimators=10)
+    regressor.fit(X, y)
+    return ModelWithData(model=regressor, inference_dataframe=X, inference_dmatrix=None)
+
+
 @pytest.fixture
 def model_path(tmpdir):
     return os.path.join(str(tmpdir), "model")
@@ -77,6 +87,24 @@ def test_model_save_load(xgb_model, model_path):
     np.testing.assert_array_almost_equal(
         reloaded_model.predict(xgb_model.inference_dmatrix),
         reloaded_pyfunc.predict(xgb_model.inference_dataframe),
+    )
+
+
+@pytest.mark.large
+def test_sklearn_model_save_load(xgb_sklearn_model, model_path):
+    model = xgb_sklearn_model.model
+    mlflow.xgboost.save_model(xgb_model=model, path=model_path)
+    reloaded_model = mlflow.xgboost.load_model(model_uri=model_path)
+    reloaded_pyfunc = pyfunc.load_pyfunc(model_uri=model_path)
+
+    np.testing.assert_array_almost_equal(
+        model.predict(xgb_sklearn_model.inference_dataframe),
+        reloaded_model.predict(xgb_sklearn_model.inference_dataframe),
+    )
+
+    np.testing.assert_array_almost_equal(
+        reloaded_model.predict(xgb_sklearn_model.inference_dataframe),
+        reloaded_pyfunc.predict(xgb_sklearn_model.inference_dataframe),
     )
 
 
@@ -222,21 +250,23 @@ def test_save_model_with_pip_requirements(xgb_model, tmpdir):
     req_file = tmpdir.join("requirements.txt")
     req_file.write("a")
     mlflow.xgboost.save_model(xgb_model.model, tmpdir1.strpath, pip_requirements=req_file.strpath)
-    _assert_pip_requirements(tmpdir1.strpath, ["mlflow", "a"])
+    _assert_pip_requirements(tmpdir1.strpath, ["mlflow", "a"], strict=True)
 
     # List of requirements
     tmpdir2 = tmpdir.join("2")
     mlflow.xgboost.save_model(
         xgb_model.model, tmpdir2.strpath, pip_requirements=[f"-r {req_file.strpath}", "b"]
     )
-    _assert_pip_requirements(tmpdir2.strpath, ["mlflow", "a", "b"])
+    _assert_pip_requirements(tmpdir2.strpath, ["mlflow", "a", "b"], strict=True)
 
     # Constraints file
     tmpdir3 = tmpdir.join("3")
     mlflow.xgboost.save_model(
         xgb_model.model, tmpdir3.strpath, pip_requirements=[f"-c {req_file.strpath}", "b"]
     )
-    _assert_pip_requirements(tmpdir3.strpath, ["mlflow", "b", "-c constraints.txt"], ["a"])
+    _assert_pip_requirements(
+        tmpdir3.strpath, ["mlflow", "b", "-c constraints.txt"], ["a"], strict=True
+    )
 
 
 @pytest.mark.large
@@ -276,14 +306,16 @@ def test_log_model_with_pip_requirements(xgb_model, tmpdir):
     req_file.write("a")
     with mlflow.start_run():
         mlflow.xgboost.log_model(xgb_model.model, "model", pip_requirements=req_file.strpath)
-        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a"])
+        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a"], strict=True)
 
     # List of requirements
     with mlflow.start_run():
         mlflow.xgboost.log_model(
             xgb_model.model, "model", pip_requirements=[f"-r {req_file.strpath}", "b"]
         )
-        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a", "b"])
+        _assert_pip_requirements(
+            mlflow.get_artifact_uri("model"), ["mlflow", "a", "b"], strict=True
+        )
 
     # Constraints file
     with mlflow.start_run():
@@ -291,7 +323,10 @@ def test_log_model_with_pip_requirements(xgb_model, tmpdir):
             xgb_model.model, "model", pip_requirements=[f"-c {req_file.strpath}", "b"]
         )
         _assert_pip_requirements(
-            mlflow.get_artifact_uri("model"), ["mlflow", "b", "-c constraints.txt"], ["a"]
+            mlflow.get_artifact_uri("model"),
+            ["mlflow", "b", "-c constraints.txt"],
+            ["a"],
+            strict=True,
         )
 
 
@@ -445,3 +480,49 @@ def test_pyfunc_serve_and_score_sklearn(model):
     )
     scores = pd.read_json(resp.content, orient="records").values.squeeze()
     np.testing.assert_array_equal(scores, model.predict(X.head(3)))
+
+
+@pytest.mark.large
+def test_load_pyfunc_succeeds_for_older_models_with_pyfunc_data_field(xgb_model, model_path):
+    """
+    This test verifies that xgboost models saved in older versions of MLflow are loaded
+    successfully by ``mlflow.pyfunc.load_model``. These older models specify a pyfunc ``data``
+    field referring directly to a XGBoost model file. Newer models also have the
+    ``model_class`` in XGBoost flavor.
+    """
+    model = xgb_model.model
+    mlflow.xgboost.save_model(xgb_model=model, path=model_path)
+
+    model_conf_path = os.path.join(model_path, "MLmodel")
+    model_conf = Model.load(model_conf_path)
+    pyfunc_conf = model_conf.flavors.get(pyfunc.FLAVOR_NAME)
+    xgboost_conf = model_conf.flavors.get(mlflow.xgboost.FLAVOR_NAME)
+    assert xgboost_conf is not None
+    assert "model_class" in xgboost_conf
+    assert "data" in xgboost_conf
+    assert pyfunc_conf is not None
+    assert "model_class" not in pyfunc_conf
+    assert pyfunc.DATA in pyfunc_conf
+
+    # test old MLmodel conf
+    model_conf.flavors["xgboost"] = {"xgb_version": xgb.__version__, "data": "model.xgb"}
+    model_conf.save(model_conf_path)
+    model_conf = Model.load(model_conf_path)
+    xgboost_conf = model_conf.flavors.get(mlflow.xgboost.FLAVOR_NAME)
+    assert "data" in xgboost_conf
+    assert xgboost_conf["data"] == "model.xgb"
+
+    reloaded_pyfunc = pyfunc.load_model(model_uri=model_path)
+    assert isinstance(reloaded_pyfunc._model_impl.xgb_model, xgb.Booster)
+    reloaded_xgb = mlflow.xgboost.load_model(model_uri=model_path)
+    assert isinstance(reloaded_xgb, xgb.Booster)
+
+    np.testing.assert_array_almost_equal(
+        xgb_model.model.predict(xgb_model.inference_dmatrix),
+        reloaded_pyfunc.predict(xgb_model.inference_dataframe),
+    )
+
+    np.testing.assert_array_almost_equal(
+        reloaded_xgb.predict(xgb_model.inference_dmatrix),
+        reloaded_pyfunc.predict(xgb_model.inference_dataframe),
+    )

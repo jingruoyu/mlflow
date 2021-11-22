@@ -142,7 +142,7 @@ def run_databricks_project(cluster_spec, **kwargs):
         backend="databricks",
         backend_config=cluster_spec,
         parameters={"alpha": "0.4"},
-        **kwargs
+        **kwargs,
     )
 
 
@@ -426,10 +426,10 @@ class MockProfileConfigProvider:
         assert profile == "my-profile"
 
     def get_config(self):
-        return DatabricksConfig("host", "user", "pass", None, insecure=False)
+        return DatabricksConfig.from_password("host", "user", "pass", insecure=False)
 
 
-@mock.patch("requests.request")
+@mock.patch("requests.Session.request")
 @mock.patch("databricks_cli.configure.provider.get_config")
 @mock.patch.object(
     databricks_cli.configure.provider, "ProfileConfigProvider", MockProfileConfigProvider
@@ -437,15 +437,15 @@ class MockProfileConfigProvider:
 def test_databricks_http_request_integration(get_config, request):
     """Confirms that the databricks http request params can in fact be used as an HTTP request"""
 
-    def confirm_request_params(**kwargs):
+    def confirm_request_params(*args, **kwargs):
         headers = dict(_DEFAULT_HEADERS)
         headers["Authorization"] = "Basic dXNlcjpwYXNz"
+        assert args == ("PUT", "host/clusters/list")
         assert kwargs == {
-            "method": "PUT",
-            "url": "host/clusters/list",
             "headers": headers,
             "verify": True,
             "json": {"a": "b"},
+            "timeout": 120,
         }
         http_response = mock.MagicMock()
         http_response.status_code = 200
@@ -453,7 +453,7 @@ def test_databricks_http_request_integration(get_config, request):
         return http_response
 
     request.side_effect = confirm_request_params
-    get_config.return_value = DatabricksConfig("host", "user", "pass", None, insecure=False)
+    get_config.return_value = DatabricksConfig.from_password("host", "user", "pass", insecure=False)
 
     response = DatabricksJobRunner(databricks_profile_uri=None)._databricks_api_request(
         "/clusters/list", "PUT", json={"a": "b"}

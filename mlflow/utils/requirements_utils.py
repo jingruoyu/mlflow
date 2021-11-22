@@ -13,7 +13,9 @@ import importlib_metadata
 from itertools import filterfalse, chain
 from collections import namedtuple
 import logging
+import re
 
+import mlflow
 from mlflow.exceptions import MlflowException
 from mlflow.tracking.artifact_utils import _download_artifact_from_uri
 from mlflow.utils.autologging_utils.versioning import _strip_dev_version_suffix
@@ -72,7 +74,7 @@ def _join_continued_lines(lines):
 _Requirement = namedtuple("_Requirement", ["req_str", "is_constraint"])
 
 
-def _parse_requirements(requirements_file, is_constraint):
+def _parse_requirements(requirements, is_constraint):
     """
     A simplified version of `pip._internal.req.parse_requirements` which performs the following
     operations on the given requirements file and yields the parsed requirements.
@@ -82,7 +84,8 @@ def _parse_requirements(requirements_file, is_constraint):
     - Resolve requirements file references (e.g. '-r requirements.txt')
     - Resolve constraints file references (e.g. '-c constraints.txt')
 
-    :param requirements_file: A string path to a requirements file on the local filesystem.
+    :param requirements: A string path to a requirements file on the local filesystem or
+                         an iterable of pip requirement strings.
     :param is_constraint: Indicates the parsed requirements file is a constraint file.
     :return: A list of ``_Requirement`` instances.
 
@@ -94,10 +97,14 @@ def _parse_requirements(requirements_file, is_constraint):
     - Constraints Files:
       https://pip.pypa.io/en/stable/user_guide/#constraints-files
     """
-    with open(requirements_file) as f:
-        lines = f.read().splitlines()
+    if isinstance(requirements, str):
+        base_dir = os.path.dirname(requirements)
+        with open(requirements) as f:
+            requirements = f.read().splitlines()
+    else:
+        base_dir = os.getcwd()
 
-    lines = map(str.strip, lines)
+    lines = map(str.strip, requirements)
     lines = map(_strip_inline_comment, lines)
     lines = _join_continued_lines(lines)
     lines = filterfalse(_is_comment, lines)
@@ -108,11 +115,11 @@ def _parse_requirements(requirements_file, is_constraint):
             req_file = line.split(maxsplit=1)[1]
             # If `req_file` is an absolute path, `os.path.join` returns `req_file`:
             # https://docs.python.org/3/library/os.path.html#os.path.join
-            abs_path = os.path.join(os.path.dirname(requirements_file), req_file)
+            abs_path = os.path.join(base_dir, req_file)
             yield from _parse_requirements(abs_path, is_constraint=False)
         elif _is_constraints_file(line):
             req_file = line.split(maxsplit=1)[1]
-            abs_path = os.path.join(os.path.dirname(requirements_file), req_file)
+            abs_path = os.path.join(base_dir, req_file)
             yield from _parse_requirements(abs_path, is_constraint=True)
         else:
             yield _Requirement(line, is_constraint)
@@ -122,24 +129,31 @@ def _flatten(iterable):
     return chain.from_iterable(iterable)
 
 
-def _canonicalize_package_name(pkg_name):
-    return pkg_name.lower().replace("_", "-")
+_NORMALIZE_REGEX = re.compile(r"[-_.]+")
 
 
-_MODULE_TO_PACKAGES = importlib_metadata.packages_distributions()
-
-
-def _module_to_packages(module_name):
+def _normalize_package_name(pkg_name):
     """
-    Returns a list of packages that provide the specified module.
+    Normalizes a package name using the rule defined in PEP 503:
+    https://www.python.org/dev/peps/pep-0503/#normalized-names
     """
-    return _MODULE_TO_PACKAGES.get(module_name, [])
+    return _NORMALIZE_REGEX.sub("-", pkg_name).lower()
 
 
-def _get_requires_recursive(pkg_name):
+def _get_requires_recursive(pkg_name, top_pkg_name=None) -> set:
     """
-    Recursively yields both direct and transitive dependencies of the specified package.
+    Recursively yields both direct and transitive dependencies of the specified
+    package.
+    The `top_pkg_name` argument will track what's the top-level dependency for
+    which we want to list all sub-dependencies.
+    This ensures that we don't fall into recursive loops for packages with are
+    dependant on each other.
     """
+    if top_pkg_name is None:
+        # Assume the top package
+        top_pkg_name = pkg_name
+
+    pkg_name = _normalize_package_name(pkg_name)
     if pkg_name not in pkg_resources.working_set.by_key:
         return
 
@@ -149,8 +163,15 @@ def _get_requires_recursive(pkg_name):
         return
 
     for req in reqs:
-        yield req.name
-        yield from _get_requires_recursive(req.name)
+        req_name = _normalize_package_name(req.name)
+        if req_name == top_pkg_name:
+            # If the top package ends up providing himself again through a
+            # recursive dependency, we don't want to consider it as a
+            # dependency
+            continue
+
+        yield req_name
+        yield from _get_requires_recursive(req.name, top_pkg_name)
 
 
 def _prune_packages(packages):
@@ -203,9 +224,9 @@ def _get_installed_version(package, module=None):
         # 1.9.0
         version = __import__(module or package).__version__
 
-    # In Databricks, strip a dev version suffix for pyspark (e.g. '3.1.2.dev0' -> '3.1.2')
-    # and make it installable from PyPI.
-    if package == "pyspark" and is_in_databricks_runtime():
+    # Strip the suffix from `dev` versions of PySpark, which are not available for installation
+    # from Anaconda or PyPI
+    if package == "pyspark":
         version = _strip_dev_version_suffix(version)
 
     return version
@@ -246,6 +267,28 @@ def _capture_imported_modules(model_uri, flavor):
             return f.read().splitlines()
 
 
+_MODULES_TO_PACKAGES = None
+
+# Represents the PyPI package index at a particular date
+# :param date: The YYYY-MM-DD formatted string date on which the index was fetched.
+# :param package_names: The set of package names in the index.
+_PyPIPackageIndex = namedtuple("_PyPIPackageIndex", ["date", "package_names"])
+
+
+def _load_pypi_package_index():
+    pypi_index_path = pkg_resources.resource_filename(mlflow.__name__, "pypi_package_index.json")
+    with open(pypi_index_path, "r") as f:
+        index_dict = json.load(f)
+
+    return _PyPIPackageIndex(
+        date=index_dict["index_date"],
+        package_names=set(index_dict["package_names"]),
+    )
+
+
+_PYPI_PACKAGE_INDEX = None
+
+
 def _infer_requirements(model_uri, flavor):
     """
     Infers the pip requirements of the specified model by creating a subprocess and loading
@@ -255,9 +298,25 @@ def _infer_requirements(model_uri, flavor):
     :param: flavor: The flavor name of the model.
     :return: A list of inferred pip requirements.
     """
+    global _MODULES_TO_PACKAGES
+    if _MODULES_TO_PACKAGES is None:
+        # Note `importlib_metada.packages_distributions` only captures packages installed into
+        # Python’s site-packages directory via tools such as pip:
+        # https://importlib-metadata.readthedocs.io/en/latest/using.html#using-importlib-metadata
+        _MODULES_TO_PACKAGES = importlib_metadata.packages_distributions()
+
+        # In Databricks, `_MODULES_TO_PACKAGES` doesn't contain pyspark since it's not installed
+        # via pip or conda. To work around this issue, manually add pyspark.
+        if is_in_databricks_runtime():
+            _MODULES_TO_PACKAGES.update({"pyspark": ["pyspark"]})
+
+    global _PYPI_PACKAGE_INDEX
+    if _PYPI_PACKAGE_INDEX is None:
+        _PYPI_PACKAGE_INDEX = _load_pypi_package_index()
+
     modules = _capture_imported_modules(model_uri, flavor)
-    packages = _flatten(map(_module_to_packages, modules))
-    packages = map(_canonicalize_package_name, packages)
+    packages = _flatten([_MODULES_TO_PACKAGES.get(module, []) for module in modules])
+    packages = map(_normalize_package_name, packages)
     packages = _prune_packages(packages)
     excluded_packages = [
         # Certain packages (e.g. scikit-learn 0.24.2) imports `setuptools` or `pkg_resources`
@@ -268,9 +327,18 @@ def _infer_requirements(model_uri, flavor):
         # Exclude a package that provides the mlflow module (e.g. mlflow, mlflow-skinny).
         # Certain flavors (e.g. pytorch) import mlflow while loading a model, but mlflow should
         # not be counted as a model requirement.
-        *_MODULE_TO_PACKAGES.get("mlflow", []),
+        *_MODULES_TO_PACKAGES.get("mlflow", []),
     ]
     packages = packages - set(excluded_packages)
+    unrecognized_packages = packages - _PYPI_PACKAGE_INDEX.package_names
+    if unrecognized_packages:
+        _logger.warning(
+            "The following packages were not found in the public PyPI package index as of"
+            " %s; if these packages are not present in the public PyPI index, you must install"
+            " them manually before loading your model: %s",
+            _PYPI_PACKAGE_INDEX.date,
+            unrecognized_packages,
+        )
     return sorted(map(_get_pinned_requirement, packages))
 
 
@@ -319,7 +387,7 @@ def _get_pinned_requirement(package, version=None, module=None):
                    to `package`.
     """
     if version is None:
-        version_raw = _get_installed_version(module or package)
+        version_raw = _get_installed_version(package, module)
         local_version_label = _get_local_version_label(version_raw)
         if local_version_label:
             version = _strip_local_version_label(version_raw)

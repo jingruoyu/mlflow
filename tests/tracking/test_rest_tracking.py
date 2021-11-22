@@ -118,11 +118,14 @@ def cli_env(tracking_server_uri):
 
 def test_create_get_list_experiment(mlflow_client):
     experiment_id = mlflow_client.create_experiment(
-        "My Experiment", artifact_location="my_location"
+        "My Experiment", artifact_location="my_location", tags={"key1": "val1", "key2": "val2"}
     )
     exp = mlflow_client.get_experiment(experiment_id)
     assert exp.name == "My Experiment"
     assert exp.artifact_location == "my_location"
+    assert len(exp.tags) == 2
+    assert exp.tags["key1"] == "val1"
+    assert exp.tags["key2"] == "val2"
 
     experiments = mlflow_client.list_experiments()
     assert set([e.name for e in experiments]) == {"My Experiment", "Default"}
@@ -364,7 +367,7 @@ def test_log_batch(mlflow_client, backend_store_uri):
     assert metric.step == 3
 
 
-@pytest.mark.disable_prevent_infer_pip_requirements_fallback
+@pytest.mark.allow_infer_pip_requirements_fallback
 def test_log_model(mlflow_client, backend_store_uri):
     experiment_id = mlflow_client.create_experiment("Log models")
     with TempDir(chdr=True):

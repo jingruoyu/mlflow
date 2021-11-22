@@ -104,12 +104,14 @@ def test_model_save_load(cb_model, model_path):
 
     loaded_model = mlflow.catboost.load_model(model_uri=model_path)
     np.testing.assert_array_almost_equal(
-        model.predict(inference_dataframe), loaded_model.predict(inference_dataframe),
+        model.predict(inference_dataframe),
+        loaded_model.predict(inference_dataframe),
     )
 
     loaded_pyfunc = pyfunc.load_pyfunc(model_uri=model_path)
     np.testing.assert_array_almost_equal(
-        loaded_model.predict(inference_dataframe), loaded_pyfunc.predict(inference_dataframe),
+        loaded_model.predict(inference_dataframe),
+        loaded_pyfunc.predict(inference_dataframe),
     )
 
 
@@ -132,7 +134,7 @@ save_formats = SUPPORTS_DESERIALIZATION + ["python", "cpp", "pmml"]
 
 
 @pytest.mark.large
-@pytest.mark.disable_prevent_infer_pip_requirements_fallback
+@pytest.mark.allow_infer_pip_requirements_fallback
 @pytest.mark.parametrize("save_format", save_formats)
 def test_log_model_logs_save_format(reg_model, save_format):
     with mlflow.start_run():
@@ -180,7 +182,8 @@ def test_model_load_from_remote_uri_succeeds(reg_model, model_path, mock_s3_buck
     model_uri = artifact_root + "/" + artifact_path
     loaded_model = mlflow.catboost.load_model(model_uri=model_uri)
     np.testing.assert_array_almost_equal(
-        model.predict(inference_dataframe), loaded_model.predict(inference_dataframe),
+        model.predict(inference_dataframe),
+        loaded_model.predict(inference_dataframe),
     )
 
 
@@ -197,7 +200,8 @@ def test_log_model(cb_model, tmpdir):
 
         loaded_model = mlflow.catboost.load_model(model_uri)
         np.testing.assert_array_almost_equal(
-            model.predict(inference_dataframe), loaded_model.predict(inference_dataframe),
+            model.predict(inference_dataframe),
+            loaded_model.predict(inference_dataframe),
         )
 
         local_path = _download_artifact_from_uri(model_uri)
@@ -303,14 +307,16 @@ def test_log_model_with_pip_requirements(reg_model, tmpdir):
     req_file.write("a")
     with mlflow.start_run():
         mlflow.catboost.log_model(reg_model.model, "model", pip_requirements=req_file.strpath)
-        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a"])
+        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a"], strict=True)
 
     # List of requirements
     with mlflow.start_run():
         mlflow.catboost.log_model(
             reg_model.model, "model", pip_requirements=[f"-r {req_file.strpath}", "b"]
         )
-        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a", "b"])
+        _assert_pip_requirements(
+            mlflow.get_artifact_uri("model"), ["mlflow", "a", "b"], strict=True
+        )
 
     # Constraints file
     with mlflow.start_run():
@@ -318,7 +324,10 @@ def test_log_model_with_pip_requirements(reg_model, tmpdir):
             reg_model.model, "model", pip_requirements=[f"-c {req_file.strpath}", "b"]
         )
         _assert_pip_requirements(
-            mlflow.get_artifact_uri("model"), ["mlflow", "b", "-c constraints.txt"], ["a"]
+            mlflow.get_artifact_uri("model"),
+            ["mlflow", "b", "-c constraints.txt"],
+            ["a"],
+            strict=True,
         )
 
 
@@ -386,6 +395,7 @@ def test_pyfunc_serve_and_score(reg_model):
         model_uri,
         data=inference_dataframe,
         content_type=pyfunc_scoring_server.CONTENT_TYPE_JSON_SPLIT_ORIENTED,
+        extra_args=EXTRA_PYFUNC_SERVING_TEST_ARGS,
     )
     scores = pd.read_json(resp.content, orient="records").values.squeeze()
     np.testing.assert_array_almost_equal(scores, model.predict(inference_dataframe))
@@ -404,6 +414,7 @@ def test_pyfunc_serve_and_score_sklearn(reg_model):
         model_uri,
         inference_dataframe.head(3),
         pyfunc_scoring_server.CONTENT_TYPE_JSON_SPLIT_ORIENTED,
+        extra_args=EXTRA_PYFUNC_SERVING_TEST_ARGS,
     )
     scores = pd.read_json(resp.content, orient="records").values.squeeze()
     np.testing.assert_array_almost_equal(scores, model.predict(inference_dataframe.head(3)))

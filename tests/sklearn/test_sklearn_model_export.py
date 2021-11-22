@@ -215,7 +215,9 @@ def test_log_model_no_registered_model_name(sklearn_logreg_model):
         conda_env = os.path.join(tmp.path(), "conda_env.yaml")
         _mlflow_conda_env(conda_env, additional_pip_deps=["scikit-learn"])
         mlflow.sklearn.log_model(
-            sk_model=sklearn_logreg_model.model, artifact_path=artifact_path, conda_env=conda_env,
+            sk_model=sklearn_logreg_model.model,
+            artifact_path=artifact_path,
+            conda_env=conda_env,
         )
         mlflow.register_model.assert_not_called()
 
@@ -300,14 +302,16 @@ def test_log_model_with_pip_requirements(sklearn_knn_model, tmpdir):
         mlflow.sklearn.log_model(
             sklearn_knn_model.model, "model", pip_requirements=req_file.strpath
         )
-        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a"])
+        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a"], strict=True)
 
     # List of requirements
     with mlflow.start_run():
         mlflow.sklearn.log_model(
             sklearn_knn_model.model, "model", pip_requirements=[f"-r {req_file.strpath}", "b"]
         )
-        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a", "b"])
+        _assert_pip_requirements(
+            mlflow.get_artifact_uri("model"), ["mlflow", "a", "b"], strict=True
+        )
 
     # Constraints file
     with mlflow.start_run():
@@ -315,7 +319,10 @@ def test_log_model_with_pip_requirements(sklearn_knn_model, tmpdir):
             sklearn_knn_model.model, "model", pip_requirements=[f"-c {req_file.strpath}", "b"]
         )
         _assert_pip_requirements(
-            mlflow.get_artifact_uri("model"), ["mlflow", "b", "-c constraints.txt"], ["a"]
+            mlflow.get_artifact_uri("model"),
+            ["mlflow", "b", "-c constraints.txt"],
+            ["a"],
+            strict=True,
         )
 
 

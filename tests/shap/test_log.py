@@ -121,22 +121,25 @@ def test_sklearn_log_explainer_pyfunc():
 
 
 def test_log_explanation_doesnt_create_autologged_run():
-    mlflow.sklearn.autolog(disable=False, exclusive=False)
-    dataset = sklearn.datasets.load_boston()
-    X = pd.DataFrame(dataset.data[:50, :8], columns=dataset.feature_names[:8])
-    y = dataset.target[:50]
-    model = sklearn.linear_model.LinearRegression()
-    model.fit(X, y)
+    try:
+        mlflow.sklearn.autolog(disable=False, exclusive=False)
+        dataset = sklearn.datasets.load_boston()
+        X = pd.DataFrame(dataset.data[:50, :8], columns=dataset.feature_names[:8])
+        y = dataset.target[:50]
+        model = sklearn.linear_model.LinearRegression()
+        model.fit(X, y)
 
-    with mlflow.start_run() as run:
-        mlflow.shap.log_explanation(model.predict, X)
+        with mlflow.start_run() as run:
+            mlflow.shap.log_explanation(model.predict, X)
 
-    run_data = MlflowClient().get_run(run.info.run_id).data
-    metrics, params, tags = run_data.metrics, run_data.params, run_data.tags
-    assert not metrics
-    assert not params
-    assert all("mlflow." in key for key in tags)
-    assert "mlflow.autologging" not in tags
+        run_data = MlflowClient().get_run(run.info.run_id).data
+        metrics, params, tags = run_data.metrics, run_data.params, run_data.tags
+        assert not metrics
+        assert not params
+        assert all("mlflow." in key for key in tags)
+        assert "mlflow.autologging" not in tags
+    finally:
+        mlflow.sklearn.autolog(disable=True)
 
 
 def test_load_pyfunc(tmpdir):
@@ -205,7 +208,7 @@ def test_log_model_with_pip_requirements(shap_model, tmpdir):
     with mlflow.start_run():
         mlflow.shap.log_explainer(shap_model, "model", pip_requirements=req_file.strpath)
         _assert_pip_requirements(
-            mlflow.get_artifact_uri("model"), ["mlflow", "a", *sklearn_default_reqs]
+            mlflow.get_artifact_uri("model"), ["mlflow", "a", *sklearn_default_reqs], strict=True
         )
 
     # List of requirements
@@ -214,7 +217,9 @@ def test_log_model_with_pip_requirements(shap_model, tmpdir):
             shap_model, "model", pip_requirements=[f"-r {req_file.strpath}", "b"]
         )
         _assert_pip_requirements(
-            mlflow.get_artifact_uri("model"), ["mlflow", "a", "b", *sklearn_default_reqs]
+            mlflow.get_artifact_uri("model"),
+            ["mlflow", "a", "b", *sklearn_default_reqs],
+            strict=True,
         )
 
     # Constraints file
@@ -226,6 +231,7 @@ def test_log_model_with_pip_requirements(shap_model, tmpdir):
             mlflow.get_artifact_uri("model"),
             ["mlflow", "b", "-c constraints.txt", *sklearn_default_reqs],
             ["a"],
+            strict=True,
         )
 
 
@@ -287,7 +293,8 @@ def test_pyfunc_serve_and_score():
         # `link` defaults to `shap.links.identity` which is decorated by `numba.jit` and causes
         # the following error when loading the explainer for serving:
         # ```
-        # Exception: The passed link function needs to be callable and have a callable .inverse property!  # noqa
+        # Exception: The passed link function needs to be callable and have a callable
+        # .inverse property!
         # ```
         # As a workaround, use an identify function that's NOT decorated by `numba.jit`.
         link=create_identity_function(),

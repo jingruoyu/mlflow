@@ -195,7 +195,7 @@ def test_autolog_respects_disable_flag_across_import_orders():
         assert all("mlflow." in key for key in tags)
 
     def import_sklearn():
-        import sklearn  # pylint: disable=unused-variable
+        import sklearn  # pylint: disable=unused-import
 
     def disable_autolog():
         mlflow.sklearn.autolog(disable=True)
@@ -281,3 +281,24 @@ def test_autolog_respects_silent_mode(tmpdir):
     # `clean_up_leaked_runs` fixture in `tests/conftest.py` to fail.
     while mlflow.active_run():
         mlflow.end_run()
+
+
+def test_autolog_globally_configured_flag_set_correctly():
+    from mlflow.utils.autologging_utils import AUTOLOGGING_INTEGRATIONS
+
+    AUTOLOGGING_INTEGRATIONS.clear()
+    import sklearn  # pylint: disable=unused-import,unused-variable
+    import pyspark  # pylint: disable=unused-import,unused-variable
+    import pyspark.ml  # pylint: disable=unused-import,unused-variable
+
+    integrations_to_test = ["sklearn", "spark", "pyspark.ml"]
+    mlflow.autolog()
+    for integration_name in integrations_to_test:
+        assert AUTOLOGGING_INTEGRATIONS[integration_name]["globally_configured"]
+
+    mlflow.sklearn.autolog()
+    mlflow.spark.autolog()
+    mlflow.pyspark.ml.autolog()
+
+    for integration_name in integrations_to_test:
+        assert "globally_configured" not in AUTOLOGGING_INTEGRATIONS[integration_name]

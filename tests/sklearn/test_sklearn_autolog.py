@@ -6,10 +6,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
-from packaging.version import Version  # pylint: disable=unused-import
+import re
+from packaging.version import Version
 
 import sklearn
 import sklearn.base
+import sklearn.cluster
 import sklearn.datasets
 import sklearn.pipeline
 import sklearn.model_selection
@@ -241,7 +243,10 @@ def test_classifier_binary():
     }
     if _is_metric_supported("roc_auc_score"):
         expected_metrics["training_roc_auc_score"] = sklearn.metrics.roc_auc_score(
-            y_true, y_score=y_pred_prob_roc, average="weighted", multi_class="ovo",
+            y_true,
+            y_score=y_pred_prob_roc,
+            average="weighted",
+            multi_class="ovo",
         )
 
     assert metrics == expected_metrics
@@ -301,7 +306,10 @@ def test_classifier_multi_class():
     }
     if _is_metric_supported("roc_auc_score"):
         expected_metrics["training_roc_auc_score"] = sklearn.metrics.roc_auc_score(
-            y_true, y_score=y_pred_prob, average="weighted", multi_class="ovo",
+            y_true,
+            y_score=y_pred_prob,
+            average="weighted",
+            multi_class="ovo",
         )
 
     assert metrics == expected_metrics
@@ -684,16 +692,18 @@ def test_autolog_emits_warning_message_when_model_prediction_fails():
         )
         cv_model.fit(*get_iris())
 
-        # Ensure `cv_model.predict` fails with `NotFittedError`
-        msg = (
-            "This GridSearchCV instance was initialized with refit=False. "
-            "predict is available only after refitting on the best parameters"
+        # Ensure `cv_model.predict` fails with `NotFittedError` or `AttributeError`
+        err = (
+            NotFittedError if Version(sklearn.__version__) <= Version("0.24.2") else AttributeError
         )
-        with pytest.raises(NotFittedError, match=msg):
+        match = r"This GridSearchCV instance.+refit=False.+predict"
+        with pytest.raises(err, match=match):
             cv_model.predict([[0, 0, 0, 0]])
 
         # Count how many times `mock_warning` has been called on not-fitted `predict` failure
-        call_count = len([args for args in mock_warning.call_args_list if msg in args[0][0]])
+        call_count = len(
+            [args for args in mock_warning.call_args_list if re.search(match, args[0][0])]
+        )
         # If `_is_plotting_supported` returns True (meaning sklearn version is >= 0.22.0),
         # `mock_warning` should have been called twice, once for metrics, once for artifacts.
         # Otherwise, only once for metrics.
@@ -714,7 +724,9 @@ def test_parameter_search_estimators_produce_expected_outputs(
     cv_class, search_space, backend, max_tuning_runs
 ):
     mlflow.sklearn.autolog(
-        log_input_examples=True, log_model_signatures=True, max_tuning_runs=max_tuning_runs,
+        log_input_examples=True,
+        log_model_signatures=True,
+        max_tuning_runs=max_tuning_runs,
     )
 
     svc = sklearn.svm.SVC()
@@ -1152,7 +1164,10 @@ def test_eval_and_log_metrics_for_binary_classifier():
     }
     if _is_metric_supported("roc_auc_score"):
         expected_metrics["val_roc_auc_score"] = sklearn.metrics.roc_auc_score(
-            y_eval, y_score=y_pred_prob_roc, average="weighted", multi_class="ovo",
+            y_eval,
+            y_score=y_pred_prob_roc,
+            average="weighted",
+            multi_class="ovo",
         )
     assert eval_metrics == expected_metrics
 
@@ -1209,7 +1224,10 @@ def test_eval_and_log_metrics_matches_training_metrics():
     }
     if _is_metric_supported("roc_auc_score"):
         expected_metrics["val_roc_auc_score"] = sklearn.metrics.roc_auc_score(
-            y_eval, y_score=y_pred_prob_roc, average="weighted", multi_class="ovo",
+            y_eval,
+            y_score=y_pred_prob_roc,
+            average="weighted",
+            multi_class="ovo",
         )
     assert eval_metrics == expected_metrics
 
@@ -1271,7 +1289,10 @@ def test_eval_and_log_metrics_for_classifier_multi_class():
     }
     if _is_metric_supported("roc_auc_score"):
         expected_metrics["eval_roc_auc_score"] = sklearn.metrics.roc_auc_score(
-            y_eval, y_score=y_pred_prob, average="weighted", multi_class="ovo",
+            y_eval,
+            y_score=y_pred_prob,
+            average="weighted",
+            multi_class="ovo",
         )
 
     assert eval_metrics == expected_metrics
@@ -1291,8 +1312,6 @@ def test_eval_and_log_metrics_for_classifier_multi_class():
 def test_eval_and_log_metrics_with_estimator(fit_func_name):
     # disable autologging so that we can check for the sole existence of eval-time metrics
     mlflow.sklearn.autolog(disable=True)
-
-    import sklearn.cluster
 
     # use `KMeans` because it implements `fit`, `fit_transform`, and `fit_predict`.
     model = sklearn.cluster.KMeans()
@@ -1618,8 +1637,6 @@ def test_post_training_metric_autologging_for_predict_prob():
 
 
 def test_post_training_metric_autologging_patch_transform():
-    import sklearn.cluster
-
     mlflow.sklearn.autolog()
     X, y = get_iris()
     kmeans_model = sklearn.cluster.KMeans().fit(X, y)
@@ -1762,7 +1779,7 @@ def test_gen_metric_call_commands():
         None,
         metric_fn1,
         *[np.array([1.0]), pd.DataFrame(data={"c1": [1]})],
-        **{"c2": 4, "d1": None, "d2": False, "d3": "def", "randarg1": "a" * 100, "randarg2": "0.1"}
+        **{"c2": 4, "d1": None, "d2": False, "d3": "def", "randarg1": "a" * 100, "randarg2": "0.1"},
     )
 
     assert (
@@ -1859,3 +1876,51 @@ def test_is_metrics_value_loggable():
     assert not is_metric_value_loggable(np.bool(True))
     assert not is_metric_value_loggable([1, 2])
     assert not is_metric_value_loggable(np.array([1, 2]))
+
+
+def test_log_post_training_metrics_configuration():
+    from sklearn.linear_model import LogisticRegression
+
+    X, y = get_iris()
+    model = LogisticRegression()
+    metric_name = sklearn.metrics.r2_score.__name__
+
+    # Ensure post-traning metrics autologging can be toggled on / off
+    for log_post_training_metrics in [True, False, True]:
+        mlflow.sklearn.autolog(log_post_training_metrics=log_post_training_metrics)
+
+        with mlflow.start_run() as run:
+            model.fit(X, y)
+            y_pred = model.predict(X)
+            sklearn.metrics.r2_score(y, y_pred)
+
+        metrics = get_run_data(run.info.run_id)[1]
+        assert any(k.startswith(metric_name) for k in metrics.keys()) is log_post_training_metrics
+
+
+class NonPickleableKmeans(sklearn.cluster.KMeans):
+    def __init__(self, n_clusters=8, *, init="k-means++"):
+        super(NonPickleableKmeans, self).__init__(n_clusters, init=init)
+        self.generator = (i for i in range(3))
+
+
+def test_autolog_print_warning_if_custom_estimator_pickling_raise_error():
+    import pickle
+
+    mlflow.sklearn.autolog()
+
+    with mlflow.start_run() as run, mock.patch("mlflow.sklearn._logger.warning") as mock_warning:
+        non_pickable_kmeans = NonPickleableKmeans()
+
+        with pytest.raises(TypeError, match="can't pickle generator objects"):
+            pickle.dumps(non_pickable_kmeans)
+
+        non_pickable_kmeans.fit(*get_iris())
+        assert any(
+            call_args[0][0].startswith("Pickling custom sklearn model NonPickleableKmeans failed")
+            for call_args in mock_warning.call_args_list
+        )
+
+    run_id = run.info.run_id
+    params, metrics, tags, artifacts = get_run_data(run_id)
+    assert len(params) > 0 and len(metrics) > 0 and len(tags) > 0 and artifacts == []

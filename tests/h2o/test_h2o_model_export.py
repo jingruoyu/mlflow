@@ -101,29 +101,20 @@ def test_signature_and_examples_are_saved_correctly(h2o_iris_model):
 @pytest.mark.large
 def test_model_log(h2o_iris_model):
     h2o_model = h2o_iris_model.model
-    old_uri = mlflow.get_tracking_uri()
-    # should_start_run tests whether or not calling log_model() automatically starts a run.
-    for should_start_run in [False, True]:
-        with TempDir(chdr=True, remove_on_exit=True):
-            try:
-                artifact_path = "gbm_model"
-                mlflow.set_tracking_uri("test")
-                if should_start_run:
-                    mlflow.start_run()
-                mlflow.h2o.log_model(h2o_model=h2o_model, artifact_path=artifact_path)
-                model_uri = "runs:/{run_id}/{artifact_path}".format(
-                    run_id=mlflow.active_run().info.run_id, artifact_path=artifact_path
-                )
-
-                # Load model
-                h2o_model_loaded = mlflow.h2o.load_model(model_uri=model_uri)
-                assert all(
-                    h2o_model_loaded.predict(h2o_iris_model.inference_data).as_data_frame()
-                    == h2o_model.predict(h2o_iris_model.inference_data).as_data_frame()
-                )
-            finally:
-                mlflow.end_run()
-                mlflow.set_tracking_uri(old_uri)
+    try:
+        artifact_path = "gbm_model"
+        mlflow.h2o.log_model(h2o_model=h2o_model, artifact_path=artifact_path)
+        model_uri = "runs:/{run_id}/{artifact_path}".format(
+            run_id=mlflow.active_run().info.run_id, artifact_path=artifact_path
+        )
+        # Load model
+        h2o_model_loaded = mlflow.h2o.load_model(model_uri=model_uri)
+        assert all(
+            h2o_model_loaded.predict(h2o_iris_model.inference_data).as_data_frame()
+            == h2o_model.predict(h2o_iris_model.inference_data).as_data_frame()
+        )
+    finally:
+        mlflow.end_run()
 
 
 @pytest.mark.large
@@ -186,14 +177,18 @@ def test_log_model_with_pip_requirements(h2o_iris_model, tmpdir):
     req_file.write("a")
     with mlflow.start_run():
         mlflow.h2o.log_model(h2o_iris_model.model, "model", pip_requirements=req_file.strpath)
-        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a"])
+        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a"], strict=True)
 
     # List of requirements
     with mlflow.start_run():
         mlflow.h2o.log_model(
-            h2o_iris_model.model, "model", pip_requirements=[f"-r {req_file.strpath}", "b"]
+            h2o_iris_model.model,
+            "model",
+            pip_requirements=[f"-r {req_file.strpath}", "b"],
         )
-        _assert_pip_requirements(mlflow.get_artifact_uri("model"), ["mlflow", "a", "b"])
+        _assert_pip_requirements(
+            mlflow.get_artifact_uri("model"), ["mlflow", "a", "b"], strict=True
+        )
 
     # Constraints file
     with mlflow.start_run():
@@ -201,7 +196,10 @@ def test_log_model_with_pip_requirements(h2o_iris_model, tmpdir):
             h2o_iris_model.model, "model", pip_requirements=[f"-c {req_file.strpath}", "b"]
         )
         _assert_pip_requirements(
-            mlflow.get_artifact_uri("model"), ["mlflow", "b", "-c constraints.txt"], ["a"]
+            mlflow.get_artifact_uri("model"),
+            ["mlflow", "b", "-c constraints.txt"],
+            ["a"],
+            strict=True,
         )
 
 

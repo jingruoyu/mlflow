@@ -5,24 +5,13 @@ import { modelListPageRoute, getModelPageRoute } from '../routes';
 import { SchemaTable } from './SchemaTable';
 import Utils from '../../common/utils/Utils';
 import { ModelStageTransitionDropdown } from './ModelStageTransitionDropdown';
-import {
-  Button as AntdButton,
-  Dropdown,
-  Icon,
-  Menu,
-  Modal,
-  Alert,
-  Descriptions,
-  Tooltip,
-  message,
-} from 'antd';
+import { Button as AntdButton, Modal, Alert, Descriptions, message } from 'antd';
 import {
   ModelVersionStatus,
   StageTagComponents,
   ModelVersionStatusIcons,
   DefaultModelVersionStatusMessages,
   ACTIVE_STAGES,
-  modelVersion_DELETE_MENU_ITEM_DISABLED_TOOLTIP_TEXT,
 } from '../constants';
 import Routers from '../../experiment-tracking/routes';
 import { CollapsibleSection } from '../../common/components/CollapsibleSection';
@@ -31,8 +20,7 @@ import { EditableTagsTableView } from '../../common/components/EditableTagsTable
 import { getModelVersionTags } from '../reducers';
 import { setModelVersionTagApi, deleteModelVersionTagApi } from '../actions';
 import { connect } from 'react-redux';
-import { PageHeader } from '../../shared/building_blocks/PageHeader';
-import { Spacer } from '../../shared/building_blocks/Spacer';
+import { OverflowMenu, PageHeader } from '../../shared/building_blocks/PageHeader';
 import { FormattedMessage, injectIntl } from 'react-intl';
 
 export class ModelVersionViewImpl extends React.Component {
@@ -185,34 +173,8 @@ export class ModelVersionViewImpl extends React.Component {
     });
   };
 
-  renderPageHeaderDropdown() {
-    const menu = (
-      <Menu>
-        {ACTIVE_STAGES.includes(this.props.modelVersion.currentStage) ? (
-          <Menu.Item disabled className='delete'>
-            <Tooltip placement='right' title={modelVersion_DELETE_MENU_ITEM_DISABLED_TOOLTIP_TEXT}>
-              <FormattedMessage
-                defaultMessage='Delete'
-                description='Text for disabled deleted button due to inactive stage on model
-                   version view page header'
-              />
-            </Tooltip>
-          </Menu.Item>
-        ) : (
-          <Menu.Item onClick={this.showDeleteModal} className='delete'>
-            <FormattedMessage
-              defaultMessage='Delete'
-              description='Text for delete button on model version view page header'
-            />
-          </Menu.Item>
-        )}
-      </Menu>
-    );
-    return (
-      <Dropdown data-test-id='breadCrumbMenuDropdown' overlay={menu} trigger={['click']}>
-        <Icon type='caret-down' className='breadcrumb-caret' />
-      </Dropdown>
-    );
+  shouldHideDeleteOption() {
+    return false;
   }
 
   renderStageDropdown(modelVersion) {
@@ -373,6 +335,27 @@ export class ModelVersionViewImpl extends React.Component {
     }
   }
 
+  getPageHeader(title, breadcrumbs) {
+    const menu = [
+      {
+        id: 'delete',
+        itemName: (
+          <FormattedMessage
+            defaultMessage='Delete'
+            description='Text for delete button on model version view page header'
+          />
+        ),
+        onClick: this.showDeleteModal,
+        disabled: ACTIVE_STAGES.includes(this.props.modelVersion.current_stage),
+      },
+    ];
+    return (
+      <PageHeader title={title} breadcrumbs={breadcrumbs}>
+        {!this.shouldHideDeleteOption() && <OverflowMenu menu={menu} />}
+      </PageHeader>
+    );
+  }
+
   render() {
     const { modelName, modelVersion, tags, schema } = this.props;
     const { description } = modelVersion;
@@ -383,16 +366,11 @@ export class ModelVersionViewImpl extends React.Component {
       isTagsRequestPending,
     } = this.state;
     const title = (
-      <Spacer size='small' direction='horizontal'>
-        <span>
-          <FormattedMessage
-            defaultMessage='Version {versionNum}'
-            description='Title text for model version page'
-            values={{ versionNum: modelVersion.version }}
-          />
-        </span>
-        {this.renderPageHeaderDropdown()}
-      </Spacer>
+      <FormattedMessage
+        defaultMessage='Version {versionNum}'
+        description='Title text for model version page'
+        values={{ versionNum: modelVersion.version }}
+      />
     );
     const breadcrumbs = [
       <Link to={modelListPageRoute}>
@@ -415,7 +393,7 @@ export class ModelVersionViewImpl extends React.Component {
     ];
     return (
       <div>
-        <PageHeader title={title} breadcrumbs={breadcrumbs} />
+        {this.getPageHeader(title, breadcrumbs)}
         {this.renderStatusAlert()}
 
         {/* Metadata List */}
@@ -434,6 +412,7 @@ export class ModelVersionViewImpl extends React.Component {
           }
           forceOpen={showDescriptionEditor}
           defaultCollapsed={!description}
+          data-test-id='model-version-description-section'
         >
           <EditableNote
             defaultMarkdown={description}
@@ -451,6 +430,7 @@ export class ModelVersionViewImpl extends React.Component {
               />
             }
             defaultCollapsed={Utils.getVisibleTagValues(tags).length === 0}
+            data-test-id='model-version-tags-section'
           >
             <EditableTagsTableView
               wrappedComponentRef={this.saveFormRef}
@@ -469,6 +449,7 @@ export class ModelVersionViewImpl extends React.Component {
               description='Title text for the schema section on the model versions view page'
             />
           }
+          data-test-id='model-version-schema-section'
         >
           <SchemaTable schema={schema} />
         </CollapsibleSection>
